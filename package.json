@@ -7,14 +7,15 @@
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "test:unit": "vitest run --coverage --watch",
+    "test:unit": "vitest run --coverage",
     "test:e2e": "playwright test",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "format": "oxfmt src/"
+    "format": "oxfmt src/",
+    "prepare": "husky"
   },
   "dependencies": {
     "pinia": "^3.0.4",
@@ -38,8 +39,10 @@
     "eslint-plugin-oxlint": "~1.50.0",
     "eslint-plugin-playwright": "^2.8.0",
     "eslint-plugin-vue": "~10.8.0",
+    "husky": "^9.1.7",
     "jiti": "^2.6.1",
     "jsdom": "^28.1.0",
+    "lint-staged": "^16.4.0",
     "npm-run-all2": "^8.0.4",
     "oxfmt": "^0.35.0",
     "oxlint": "~1.50.0",
@@ -48,6 +51,9 @@
     "vite-plugin-vue-devtools": "^8.0.6",
     "vitest": "^4.0.18",
     "vue-tsc": "^3.2.5"
+  },
+  "lint-staged": {
+    "*": "oxfmt --no-error-on-unmatched-pattern"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
