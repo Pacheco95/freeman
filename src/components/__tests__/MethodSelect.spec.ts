@@ -12,8 +12,10 @@ describe('MethodSelect', () => {
     // Verify initial text is GET
     expect(wrapper.text()).toContain('GET')
 
-    // Simulate updating the model value to POST
-    wrapper.vm.$emit('update:modelValue', 'POST')
+    // Get the Select component and simulate the update:model-value event
+    const selectComponent = wrapper.findComponent({ name: 'Select' })
+    await selectComponent.vm.$emit('update:modelValue', 'POST')
+    await nextTick()
 
     // Check that the emitted value is POST
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['POST'])
