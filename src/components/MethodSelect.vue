@@ -8,15 +8,11 @@ import {
 } from '@/components/ui/select'
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const
 export type Method = (typeof methods)[number]
-defineProps<{ modelValue: Method }>()
-const emit = defineEmits<{ 'update:modelValue': [value: Method] }>()
+const method = defineModel<Method>()
 </script>
 
 <template>
-  <Select
-    :model-value="modelValue"
-    @update:model-value="(val) => emit('update:modelValue', val as Method)"
-  >
+  <Select v-model="method">
     <SelectTrigger class="w-30">
       <SelectValue placeholder="Select a method" />
     </SelectTrigger>

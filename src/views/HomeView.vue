@@ -7,6 +7,6 @@ const method = ref<Method>('GET')
 
 <template>
   <main>
-    <MethodSelect :model-value="method" @update:model-value="method = $event" />
+    <MethodSelect v-model="method" />
   </main>
 </template>
