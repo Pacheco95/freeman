@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import MethodSelect, { type Method } from '@/components/MethodSelect.vue'
 import { ref } from 'vue'
+import RequestForm, { type RequestFormData } from '@/components/RequestForm.vue'
+import type { Method } from '@/components/MethodSelect.vue'
 
-const method = ref<Method>('GET')
+const method = ref<Method>('POST')
+const url = ref('')
+
+const handleSubmit = (values: RequestFormData) => {
+  console.log(values)
+}
 </script>
 
 <template>
   <main>
-    <MethodSelect v-model="method" />
+    <RequestForm v-model:method="method" v-model:url="url" @submit="handleSubmit" />
   </main>
 </template>
