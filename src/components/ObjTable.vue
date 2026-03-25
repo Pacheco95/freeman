@@ -10,8 +10,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Trash2, GripVertical } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { GripVertical, Trash2 } from 'lucide-vue-next'
+import { ref, watch } from 'vue'
 
 type Row = {
   data: T
@@ -31,7 +31,7 @@ const rows = defineModel<Row[]>('rows', { default: () => [] })
 
 const draggedIndex = ref<number | null>(null)
 
-const addRow = () => {
+const addEmptyRow = () => {
   const newData = {} as T
   columns.forEach((col) => {
     newData[col.field] = '' as T[keyof T]
@@ -39,11 +39,41 @@ const addRow = () => {
   rows.value.push({ data: newData, active: false })
 }
 
+const isLastRowEmpty = () => {
+  const last = rows.value[rows.value.length - 1]
+  return last && Object.values(last.data).some((v) => v !== '')
+}
+
+if (rows.value.length === 0) {
+  addEmptyRow()
+}
+
+if (rows.value.length > 0) {
+  if (isLastRowEmpty()) {
+    addEmptyRow()
+  }
+}
+
+watch(
+  rows,
+  () => {
+    if (isLastRowEmpty()) {
+      addEmptyRow()
+    }
+  },
+  { deep: true },
+)
+
 const removeRow = (index: number) => {
-  rows.value.splice(index, 1)
+  if (index < rows.value.length - 1) {
+    rows.value.splice(index, 1)
+  }
 }
 
 const onDragStart = (event: DragEvent, index: number) => {
+  if (index >= rows.value.length - 1) {
+    return
+  }
   draggedIndex.value = index
   event.dataTransfer!.effectAllowed = 'move'
 }
@@ -58,11 +88,10 @@ const onDrop = (_event: DragEvent, dropIndex: number) => {
 </script>
 
 <template>
-  <Button @click="addRow">Add Row</Button>
   <Table>
     <TableHeader>
       <TableRow>
-        <TableHead class="w-8"> </TableHead>
+        <TableHead class="w-8"></TableHead>
         <TableHead v-for="column in columns" :key="column.title">{{ column.title }}</TableHead>
         <TableHead class="w-8"></TableHead>
       </TableRow>
@@ -72,13 +101,16 @@ const onDrop = (_event: DragEvent, dropIndex: number) => {
         v-for="(row, index) in rows"
         :key="index"
         @dragover.prevent
-        @drop="onDrop($event, index)"
+        @drop="index < rows.length - 1 ? onDrop($event, index) : null"
       >
         <TableCell class="font-medium">
           <span
             draggable="true"
             @dragstart="onDragStart($event, index)"
-            class="cursor-move inline-flex items-center"
+            :class="[
+              index < rows.length - 1 ? 'visible' : 'invisible',
+              'cursor-move inline-flex items-center',
+            ]"
           >
             <GripVertical class="h-4 w-4 mr-2" />
           </span>
@@ -88,7 +120,12 @@ const onDrop = (_event: DragEvent, dropIndex: number) => {
           <Input class="rounded-none border-none shadow-none" v-model="row.data[column.field]" />
         </TableCell>
         <TableCell class="w-8">
-          <Button variant="ghost" size="sm" @click="removeRow(index)">
+          <Button
+            v-if="index < rows.length - 1"
+            variant="ghost"
+            size="sm"
+            @click="removeRow(index)"
+          >
             <Trash2 class="h-4 w-4" />
           </Button>
         </TableCell>

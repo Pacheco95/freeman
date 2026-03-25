@@ -36,6 +36,6 @@ const handleSubmit = (values: RequestFormData) => {
   <main>
     <RequestForm v-model:method="method" v-model:url="url" @submit="handleSubmit" />
 
-    <ObjTable :columns="columns" :rows="rows" />
+    <ObjTable :columns="columns" v-model:rows="rows" />
   </main>
 </template>
