@@ -3,11 +3,12 @@ import { ref } from 'vue'
 import RequestForm, { type RequestFormData } from '@/components/RequestForm.vue'
 import type { Method } from '@/components/MethodSelect.vue'
 import ObjTable from '@/components/ObjTable.vue'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const method = ref<Method>('POST')
 const url = ref('')
 
-type Obj = { name: string; value: string }
+type Obj = { key: string; value: string }
 
 const columns = ref<
   {
@@ -15,15 +16,23 @@ const columns = ref<
     field: keyof Obj
   }[]
 >([
-  { title: 'Name', field: 'name' },
+  { title: 'Key', field: 'key' },
   { title: 'Value', field: 'value' },
 ])
 
-const rows = ref<{ active: boolean; data: Obj }[]>([
-  { active: true, data: { name: 'foo', value: 'bar' } },
+const params = ref<{ active: boolean; data: Obj }[]>([
+  { active: true, data: { key: 'foo', value: 'bar' } },
   {
     active: false,
-    data: { name: 'a', value: 'n' },
+    data: { key: 'a', value: 'n' },
+  },
+])
+
+const headers = ref<{ active: boolean; data: Obj }[]>([
+  { active: true, data: { key: 'Authorization', value: 'Bearer <token>' } },
+  {
+    active: true,
+    data: { key: 'Content-Type', value: 'application/json' },
   },
 ])
 
@@ -33,9 +42,20 @@ const handleSubmit = (values: RequestFormData) => {
 </script>
 
 <template>
-  <main>
+  <main class="p-4">
     <RequestForm v-model:method="method" v-model:url="url" @submit="handleSubmit" />
 
-    <ObjTable :columns="columns" v-model:rows="rows" />
+    <Tabs default-value="params" class="mt-4">
+      <TabsList>
+        <TabsTrigger value="params">Params</TabsTrigger>
+        <TabsTrigger value="headers">Headers</TabsTrigger>
+      </TabsList>
+      <TabsContent value="params">
+        <ObjTable :columns="columns" v-model:rows="params" />
+      </TabsContent>
+      <TabsContent value="headers">
+        <ObjTable :columns="columns" v-model:rows="headers" />
+      </TabsContent>
+    </Tabs>
   </main>
 </template>
