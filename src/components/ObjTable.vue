@@ -104,17 +104,16 @@ const onDrop = (_event: DragEvent, dropIndex: number) => {
         @drop="index < rows.length - 1 ? onDrop($event, index) : null"
       >
         <TableCell class="font-medium">
-          <span
-            draggable="true"
-            @dragstart="onDragStart($event, index)"
-            :class="[
-              index < rows.length - 1 ? 'visible' : 'invisible',
-              'cursor-move inline-flex items-center',
-            ]"
-          >
-            <GripVertical class="h-4 w-4 mr-2" />
-          </span>
-          <Checkbox v-model="row.active" />
+          <div class="flex">
+            <span
+              draggable="true"
+              @dragstart="onDragStart($event, index)"
+              :class="[index < rows.length - 1 ? 'visible' : 'invisible', 'cursor-move']"
+            >
+              <GripVertical class="h-4 w-4 mr-2" />
+            </span>
+            <Checkbox v-model="row.active" />
+          </div>
         </TableCell>
         <TableCell v-for="column in columns" :key="column.title">
           <Input class="rounded-none border-none shadow-none" v-model="row.data[column.field]" />
@@ -125,6 +124,7 @@ const onDrop = (_event: DragEvent, dropIndex: number) => {
             variant="ghost"
             size="sm"
             @click="removeRow(index)"
+            class="cursor-pointer"
           >
             <Trash2 class="h-4 w-4" />
           </Button>
