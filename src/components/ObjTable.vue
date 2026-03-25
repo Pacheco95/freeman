@@ -39,7 +39,7 @@ const addEmptyRow = () => {
   rows.value.push({ data: newData, active: false })
 }
 
-const isLastRowEmpty = () => {
+const isLastRowNotEmpty = () => {
   const last = rows.value[rows.value.length - 1]
   return last && Object.values(last.data).some((v) => v !== '')
 }
@@ -49,7 +49,7 @@ if (rows.value.length === 0) {
 }
 
 if (rows.value.length > 0) {
-  if (isLastRowEmpty()) {
+  if (isLastRowNotEmpty()) {
     addEmptyRow()
   }
 }
@@ -57,7 +57,7 @@ if (rows.value.length > 0) {
 watch(
   rows,
   () => {
-    if (isLastRowEmpty()) {
+    if (isLastRowNotEmpty()) {
       addEmptyRow()
     }
   },
