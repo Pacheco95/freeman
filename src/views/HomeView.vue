@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import RequestForm, { type RequestFormData } from '@/components/RequestForm.vue'
 import type { Method } from '@/components/MethodSelect.vue'
 import ObjTable from '@/components/ObjTable.vue'
 import BodyEditor from '@/components/BodyEditor.vue'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 const method = ref<Method>('POST')
 const url = ref('https://echo.free.beeceptor.com')
@@ -39,6 +47,19 @@ const headers = ref<{ active: boolean; data: Obj }[]>([
   },
 ])
 
+const response = ref<Response | null>(null)
+
+const responseHeaders = computed(() => {
+  if (!response.value) {
+    return []
+  }
+  const headersArray: { key: string; value: string }[] = []
+  response.value.headers.forEach((value, key) => {
+    headersArray.push({ key, value })
+  })
+  return headersArray
+})
+
 const handleSubmit = async (values: RequestFormData) => {
   try {
     // Build URL with active params
@@ -59,13 +80,13 @@ const handleSubmit = async (values: RequestFormData) => {
     })
 
     // Make request
-    const response = await fetch(fullUrl, {
+    response.value = await fetch(fullUrl, {
       method: values.method,
       headers: requestHeaders,
       body: values.method !== 'GET' && values.method !== 'HEAD' ? body.value : undefined,
     })
 
-    responseBody.value = await response.text()
+    responseBody.value = await response.value.text()
   } catch (error) {
     responseBody.value = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
   }
@@ -76,27 +97,57 @@ const handleSubmit = async (values: RequestFormData) => {
   <main class="p-4 flex flex-col gap-4 h-screen">
     <RequestForm v-model:method="method" v-model:url="url" @submit="handleSubmit" />
 
-    <div class="flex-1">
-      <Tabs default-value="body" :unmount-on-hide="false">
-        <TabsList>
-          <TabsTrigger value="params">Params</TabsTrigger>
-          <TabsTrigger value="headers">Headers</TabsTrigger>
-          <TabsTrigger value="body">Body</TabsTrigger>
-          <TabsTrigger value="response">Response</TabsTrigger>
-        </TabsList>
-        <TabsContent value="params">
-          <ObjTable :columns="columns" v-model:rows="params" />
-        </TabsContent>
-        <TabsContent value="headers">
-          <ObjTable :columns="columns" v-model:rows="headers" />
-        </TabsContent>
-        <TabsContent value="body">
-          <BodyEditor v-model="body" />
-        </TabsContent>
-        <TabsContent value="response">
-          <BodyEditor v-model="responseBody" :readOnly="true" />
-        </TabsContent>
-      </Tabs>
+    <div class="flex-1 flex flex-col gap-4">
+      <section>
+        <Tabs default-value="params" :unmount-on-hide="false">
+          <TabsList>
+            <TabsTrigger value="params">Params</TabsTrigger>
+            <TabsTrigger value="headers">Headers</TabsTrigger>
+            <TabsTrigger value="body">Body</TabsTrigger>
+          </TabsList>
+          <TabsContent value="params">
+            <ObjTable :columns="columns" v-model:rows="params" />
+          </TabsContent>
+          <TabsContent value="headers">
+            <ObjTable :columns="columns" v-model:rows="headers" />
+          </TabsContent>
+          <TabsContent value="body">
+            <BodyEditor v-model="body" />
+          </TabsContent>
+        </Tabs>
+      </section>
+
+      <section class="flex-1 prose">
+        <Tabs default-value="body" :unmount-on-hide="false">
+          <TabsList>
+            <TabsTrigger value="headers">Headers</TabsTrigger>
+            <TabsTrigger value="body">Body</TabsTrigger>
+          </TabsList>
+          <TabsContent value="headers">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Key</TableHead>
+                  <TableHead>Value</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow v-for="row in responseHeaders" :key="row.key">
+                  <TableCell>
+                    {{ row.key }}
+                  </TableCell>
+                  <TableCell class="w-8">
+                    {{ row.value }}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TabsContent>
+          <TabsContent value="body">
+            <BodyEditor v-model="responseBody" :readOnly="true" />
+          </TabsContent>
+        </Tabs>
+      </section>
     </div>
   </main>
 </template>
