@@ -7,8 +7,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils.ts'
-const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const
-export type Method = (typeof methods)[number]
+import { type Method, METHODS } from '@/types/Request.ts'
+
 const method = defineModel<Method>()
 const props = defineProps({
   class: { type: String, default: '' },
@@ -21,7 +21,7 @@ const props = defineProps({
       <SelectValue placeholder="Select a method" />
     </SelectTrigger>
     <SelectContent>
-      <SelectItem v-for="method in methods" :value="method" :key="method">{{ method }} </SelectItem>
+      <SelectItem v-for="method in METHODS" :value="method" :key="method">{{ method }} </SelectItem>
     </SelectContent>
   </Select>
 </template>

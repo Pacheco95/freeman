@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import MethodSelect, { type Method } from '@/components/MethodSelect.vue'
+import MethodSelect from '@/components/MethodSelect.vue'
 import { computed } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import type { Method } from '@/types/Request.ts'
 
 export type RequestFormData = {
   method: Method

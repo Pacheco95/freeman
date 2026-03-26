@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import RequestForm, { type RequestFormData } from '@/components/RequestForm.vue'
-import type { Method } from '@/components/MethodSelect.vue'
 import ObjTable from '@/components/ObjTable.vue'
 import BodyEditor from '@/components/BodyEditor.vue'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -13,39 +12,28 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import type { Method, Request } from '@/types/Request.ts'
+import { makeRequest } from '@/services/request.service.ts'
+import HttpStatusIndicator from '@/components/HttpStatusIndicator.vue'
 
 const method = ref<Method>('POST')
 const url = ref('https://echo.free.beeceptor.com')
-const body = ref(JSON.stringify({ foo: 'bar' }, null, 2))
+const body = ref('')
 const responseBody = ref('')
 
 type Obj = { key: string; value: string }
 
-const columns = ref<
-  {
-    title: string
-    field: keyof Obj
-  }[]
->([
+const columns = [
   { title: 'Key', field: 'key' },
   { title: 'Value', field: 'value' },
-])
+] as const as Array<{
+  title: string
+  field: keyof Obj
+}>
 
-const params = ref<{ active: boolean; data: Obj }[]>([
-  { active: true, data: { key: 'foo', value: 'bar' } },
-  {
-    active: false,
-    data: { key: 'a', value: 'n' },
-  },
-])
+const params = ref<{ active: boolean; data: Obj }[]>([])
 
-const headers = ref<{ active: boolean; data: Obj }[]>([
-  { active: true, data: { key: 'Authorization', value: 'Bearer <token>' } },
-  {
-    active: true,
-    data: { key: 'Content-Type', value: 'application/json' },
-  },
-])
+const headers = ref<{ active: boolean; data: Obj }[]>([])
 
 const response = ref<Response | null>(null)
 
@@ -62,29 +50,15 @@ const responseHeaders = computed(() => {
 
 const handleSubmit = async (values: RequestFormData) => {
   try {
-    // Build URL with active params
-    const urlObj = new URL(values.url)
-    params.value.forEach((param) => {
-      if (param.active) {
-        urlObj.searchParams.append(param.data.key, param.data.value)
-      }
-    })
-    const fullUrl = urlObj.toString()
-
-    // Build headers
-    const requestHeaders: Record<string, string> = {}
-    headers.value.forEach((header) => {
-      if (header.active) {
-        requestHeaders[header.data.key] = header.data.value
-      }
-    })
-
-    // Make request
-    response.value = await fetch(fullUrl, {
+    const request: Request = {
       method: values.method,
-      headers: requestHeaders,
-      body: values.method !== 'GET' && values.method !== 'HEAD' ? body.value : undefined,
-    })
+      url: values.url,
+      params: params.value.filter((param) => param.active).map((param) => param.data),
+      headers: headers.value.filter((header) => header.active).map((header) => header.data),
+      body: body.value,
+    }
+
+    response.value = await makeRequest(request)
 
     responseBody.value = await response.value.text()
   } catch (error) {
@@ -119,10 +93,13 @@ const handleSubmit = async (values: RequestFormData) => {
 
       <section class="flex-1">
         <Tabs class="h-full flex flex-col" default-value="body" :unmount-on-hide="false">
-          <TabsList>
-            <TabsTrigger value="headers">Headers</TabsTrigger>
-            <TabsTrigger value="body">Body</TabsTrigger>
-          </TabsList>
+          <div class="flex items-center gap-4">
+            <TabsList>
+              <TabsTrigger value="headers">Headers</TabsTrigger>
+              <TabsTrigger value="body">Body</TabsTrigger>
+            </TabsList>
+            <HttpStatusIndicator v-if="response" :status="response.status" />
+          </div>
           <TabsContent value="headers">
             <Table>
               <TableHeader>
