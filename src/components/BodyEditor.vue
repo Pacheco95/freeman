@@ -1,6 +1,6 @@
 <template>
   <vue-monaco-editor
-    style="height: 400px"
+    style="height: 100%"
     class="border border-slate-200"
     :value="modelValue"
     theme="vs-light"

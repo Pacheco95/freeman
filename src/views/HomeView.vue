@@ -98,8 +98,8 @@ const handleSubmit = async (values: RequestFormData) => {
     <RequestForm v-model:method="method" v-model:url="url" @submit="handleSubmit" />
 
     <div class="flex-1 flex flex-col gap-4">
-      <section>
-        <Tabs default-value="params" :unmount-on-hide="false">
+      <section class="flex-1">
+        <Tabs class="h-full flex flex-col" default-value="params" :unmount-on-hide="false">
           <TabsList>
             <TabsTrigger value="params">Params</TabsTrigger>
             <TabsTrigger value="headers">Headers</TabsTrigger>
@@ -111,14 +111,14 @@ const handleSubmit = async (values: RequestFormData) => {
           <TabsContent value="headers">
             <ObjTable :columns="columns" v-model:rows="headers" />
           </TabsContent>
-          <TabsContent value="body">
+          <TabsContent value="body" class="h-full flex flex-col">
             <BodyEditor v-model="body" />
           </TabsContent>
         </Tabs>
       </section>
 
-      <section class="flex-1 prose">
-        <Tabs default-value="body" :unmount-on-hide="false">
+      <section class="flex-1">
+        <Tabs class="h-full flex flex-col" default-value="body" :unmount-on-hide="false">
           <TabsList>
             <TabsTrigger value="headers">Headers</TabsTrigger>
             <TabsTrigger value="body">Body</TabsTrigger>
@@ -143,7 +143,7 @@ const handleSubmit = async (values: RequestFormData) => {
               </TableBody>
             </Table>
           </TabsContent>
-          <TabsContent value="body">
+          <TabsContent value="body" class="h-full flex flex-col">
             <BodyEditor v-model="responseBody" :readOnly="true" />
           </TabsContent>
         </Tabs>
