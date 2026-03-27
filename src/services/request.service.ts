@@ -13,8 +13,9 @@ const parseRequestBody = (body: Request['body']): string | undefined => {
 
 export const makeRequest = async (request: Request) => {
   const urlObj = new URL(request.url)
-  const fullUrl = urlObj.toString()
   request.params?.forEach(({ key, value }) => urlObj.searchParams.append(key, value))
+
+  const fullUrl = urlObj.toString()
 
   const headers = request.headers?.map(({ key, value }) => [key, value] as [string, string])
   const requestBody = parseRequestBody(request.body)

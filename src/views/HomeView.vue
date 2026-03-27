@@ -12,16 +12,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { Method, Request } from '@/types/Request.ts'
+import type { Request } from '@/types/Request.ts'
 import { makeRequest } from '@/services/request.service.ts'
 import HttpStatusIndicator from '@/components/HttpStatusIndicator.vue'
-
-const method = ref<Method>('POST')
-const url = ref('https://echo.free.beeceptor.com')
-const body = ref('')
-const responseBody = ref('')
+import { useRequestStore } from '@/stores/request.store.ts'
 
 type Obj = { key: string; value: string }
+
+const requestStore = useRequestStore()
+const responseBody = ref('')
 
 const columns = [
   { title: 'Key', field: 'key' },
@@ -30,10 +29,6 @@ const columns = [
   title: string
   field: keyof Obj
 }>
-
-const params = ref<{ active: boolean; data: Obj }[]>([])
-
-const headers = ref<{ active: boolean; data: Obj }[]>([])
 
 const response = ref<Response | null>(null)
 
@@ -50,12 +45,13 @@ const responseHeaders = computed(() => {
 
 const handleSubmit = async (values: RequestFormData) => {
   try {
+    const params = requestStore.params.filter((param) => param.active).map((param) => param.data)
     const request: Request = {
       method: values.method,
       url: values.url,
-      params: params.value.filter((param) => param.active).map((param) => param.data),
-      headers: headers.value.filter((header) => header.active).map((header) => header.data),
-      body: body.value,
+      params: params,
+      headers: requestStore.headers.filter((header) => header.active).map((header) => header.data),
+      body: requestStore.body,
     }
 
     response.value = await makeRequest(request)
@@ -69,7 +65,11 @@ const handleSubmit = async (values: RequestFormData) => {
 
 <template>
   <main class="p-4 flex flex-col gap-4 h-screen">
-    <RequestForm v-model:method="method" v-model:url="url" @submit="handleSubmit" />
+    <RequestForm
+      v-model:method="requestStore.method"
+      v-model:url="requestStore.url"
+      @submit="handleSubmit"
+    />
 
     <div class="flex-1 flex flex-col gap-4">
       <section class="flex-1">
@@ -80,13 +80,13 @@ const handleSubmit = async (values: RequestFormData) => {
             <TabsTrigger value="body">Body</TabsTrigger>
           </TabsList>
           <TabsContent value="params">
-            <ObjTable :columns="columns" v-model:rows="params" />
+            <ObjTable :columns="columns" v-model:rows="requestStore.params" />
           </TabsContent>
           <TabsContent value="headers">
-            <ObjTable :columns="columns" v-model:rows="headers" />
+            <ObjTable :columns="columns" v-model:rows="requestStore.headers" />
           </TabsContent>
           <TabsContent value="body" class="h-full flex flex-col">
-            <BodyEditor v-model="body" />
+            <BodyEditor v-model="requestStore.body" />
           </TabsContent>
         </Tabs>
       </section>
