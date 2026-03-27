@@ -3,7 +3,6 @@
     style="height: 100%"
     class="border border-slate-200"
     :value="modelValue"
-    theme="vs-light"
     :options="editorOptions"
     language="json"
     @update:value="handleValueChange"
@@ -14,11 +13,14 @@
 <script lang="ts" setup>
 import { computed, shallowRef } from 'vue'
 import type { editor as monacoEditor } from 'monaco-editor'
+import { useColorMode } from '@vueuse/core'
 
 interface Props {
   modelValue: string
   readOnly?: boolean
 }
+
+const mode = useColorMode()
 
 const props = withDefaults(defineProps<Props>(), {
   readOnly: false,
@@ -32,7 +34,7 @@ const editorOptions = computed(() => ({
   automaticLayout: true,
   formatOnType: true,
   formatOnPaste: true,
-  theme: 'vs-light',
+  theme: mode.value === 'dark' ? 'vs-dark' : 'vs-light',
   readOnly: props.readOnly,
   minimap: { enabled: false },
   fontSize: 14,
