@@ -16,11 +16,15 @@ type TestData = {
   value: string
 }
 
+type Row = { data: TestData; active: boolean }
+
 describe('ObjTable', () => {
   const columns = [
     { title: 'Name', field: 'name' as keyof TestData },
     { title: 'Value', field: 'value' as keyof TestData },
   ]
+  const getRows = (wrapper: ReturnType<typeof mount>) =>
+    (wrapper.vm as unknown as { rows: Row[] }).rows
 
   it('renders table with columns and initial empty row', async () => {
     const wrapper = mount(ObjTable<TestData>, {
@@ -38,9 +42,7 @@ describe('ObjTable', () => {
   })
 
   it('adds empty row when last row has data', async () => {
-    const rows: { data: TestData; active: boolean }[] = [
-      { data: { name: 'test', value: '123' }, active: false },
-    ]
+    const rows: Row[] = [{ data: { name: 'test', value: '123' }, active: false }]
     const wrapper = mount(ObjTable<TestData>, {
       props: { columns },
       global: {
@@ -51,13 +53,14 @@ describe('ObjTable', () => {
     await wrapper.setProps({ rows })
     await nextTick()
 
-    expect(wrapper.vm.rows).toHaveLength(2)
-    expect(wrapper.vm.rows?.[1]!.data.name).toBe('')
-    expect(wrapper.vm.rows?.[1]!.data.value).toBe('')
+    const tableRows = getRows(wrapper)
+    expect(tableRows).toHaveLength(2)
+    expect(tableRows[1]!.data.name).toBe('')
+    expect(tableRows[1]!.data.value).toBe('')
   })
 
   it('removes row when delete button is clicked', async () => {
-    const rows: { data: TestData; active: boolean }[] = [
+    const rows: Row[] = [
       { data: { name: 'test1', value: '123' }, active: false },
       { data: { name: 'test2', value: '456' }, active: false },
       { data: { name: '', value: '' }, active: false },
@@ -78,14 +81,13 @@ describe('ObjTable', () => {
     await deleteButtons[0]!.trigger('click')
     await nextTick()
 
-    expect(wrapper.vm.rows).toHaveLength(2) // one removed, but empty row remains
-    expect(wrapper.vm.rows?.[0]!.data.name).toBe('test2')
+    const tableRows = getRows(wrapper)
+    expect(tableRows).toHaveLength(2) // one removed, but empty row remains
+    expect(tableRows[0]!.data.name).toBe('test2')
   })
 
   it('toggles active state via checkbox', async () => {
-    const rows: { data: TestData; active: boolean }[] = [
-      { data: { name: 'test', value: '123' }, active: false },
-    ]
+    const rows: Row[] = [{ data: { name: 'test', value: '123' }, active: false }]
     const wrapper = mount(ObjTable<TestData>, {
       props: { columns },
       global: {
@@ -100,13 +102,11 @@ describe('ObjTable', () => {
     await checkbox.vm.$emit('update:modelValue', true)
     await nextTick()
 
-    expect(wrapper.vm.rows?.[0]!.active).toBe(true)
+    expect(getRows(wrapper)[0]!.active).toBe(true)
   })
 
   it('updates data via input', async () => {
-    const rows: { data: TestData; active: boolean }[] = [
-      { data: { name: '', value: '' }, active: false },
-    ]
+    const rows: Row[] = [{ data: { name: '', value: '' }, active: false }]
     const wrapper = mount(ObjTable<TestData>, {
       props: { columns },
       global: {
@@ -123,9 +123,66 @@ describe('ObjTable', () => {
     await inputs[0]!.setValue('new name')
     await nextTick()
 
-    expect(wrapper.vm.rows?.[0]!.data.name).toBe('new name')
+    expect(getRows(wrapper)[0]!.data.name).toBe('new name')
   })
 
-  // Note: Drag and drop testing with @vue/test-utils is complex and often requires mocking or e2e tests.
-  // For unit tests, we can test the logic indirectly or skip if not critical.
+  it('reorders rows on drag and drop', async () => {
+    const rows: Row[] = [
+      { data: { name: 'first', value: '1' }, active: false },
+      { data: { name: 'second', value: '2' }, active: false },
+      { data: { name: '', value: '' }, active: false },
+    ]
+    const wrapper = mount(ObjTable<TestData>, {
+      props: { columns, rows },
+      global: {
+        components: { Table, TableBody, TableCell, TableHead, TableHeader, TableRow },
+        stubs: ['Checkbox', 'Input', 'Button'],
+      },
+    })
+    await nextTick()
+
+    const dragHandles = wrapper.findAll('span[draggable="true"]')
+    const bodyRows = wrapper.findAll('tbody tr')
+    const dataTransfer = { effectAllowed: '' }
+
+    await dragHandles[0]!.trigger('dragstart', { dataTransfer })
+    await bodyRows[1]!.trigger('drop')
+    await nextTick()
+
+    expect(dataTransfer.effectAllowed).toBe('move')
+    const tableRows = getRows(wrapper)
+    expect(tableRows[0]!.data.name).toBe('second')
+    expect(tableRows[1]!.data.name).toBe('first')
+    expect(tableRows[2]!.data.name).toBe('')
+  })
+
+  it('does not allow dragging the last placeholder row', async () => {
+    const rows: Row[] = [
+      { data: { name: 'first', value: '1' }, active: false },
+      { data: { name: 'second', value: '2' }, active: false },
+      { data: { name: '', value: '' }, active: false },
+    ]
+    const wrapper = mount(ObjTable<TestData>, {
+      props: { columns, rows },
+      global: {
+        components: { Table, TableBody, TableCell, TableHead, TableHeader, TableRow },
+        stubs: ['Checkbox', 'Input', 'Button'],
+      },
+    })
+    await nextTick()
+
+    const dragHandles = wrapper.findAll('span[draggable="true"]')
+    const bodyRows = wrapper.findAll('tbody tr')
+    const dataTransfer = { effectAllowed: '' }
+
+    await dragHandles[2]!.trigger('dragstart', { dataTransfer })
+    await bodyRows[0]!.trigger('drop')
+    await nextTick()
+
+    expect(dataTransfer.effectAllowed).toBe('')
+    const tableRows = getRows(wrapper)
+    expect(tableRows[0]!.data.name).toBe('first')
+    expect(tableRows[1]!.data.name).toBe('second')
+    expect(tableRows[2]!.data.name).toBe('')
+  })
 })
