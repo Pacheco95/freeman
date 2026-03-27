@@ -48,6 +48,7 @@ function mergeActiveParamsIntoUrl(urlStr: string, rows: ParamRow[]): string {
 export const useRequestStore = defineStore(
   'request',
   () => {
+    const activeTab = ref('params')
     const method = ref<Method>('GET')
     const url = ref('')
     const body = ref('')
@@ -89,7 +90,7 @@ export const useRequestStore = defineStore(
       { deep: true },
     )
 
-    return { method, url, body, params, headers }
+    return { activeTab, method, url, body, params, headers }
   },
   {
     persist: true,

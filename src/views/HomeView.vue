@@ -73,7 +73,11 @@ const handleSubmit = async (values: RequestFormData) => {
 
     <div class="flex-1 flex flex-col gap-4">
       <section class="flex-1">
-        <Tabs class="h-full flex flex-col" default-value="params" :unmount-on-hide="false">
+        <Tabs
+          class="h-full flex flex-col"
+          v-model:modelValue="requestStore.activeTab"
+          :unmount-on-hide="false"
+        >
           <TabsList>
             <TabsTrigger value="params">Params</TabsTrigger>
             <TabsTrigger value="headers">Headers</TabsTrigger>
