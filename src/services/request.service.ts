@@ -13,6 +13,7 @@ const parseRequestBody = (body: Request['body']): string | undefined => {
 
 export const makeRequest = async (request: Request) => {
   const urlObj = new URL(request.url)
+  urlObj.search = ''
   request.params?.forEach(({ key, value }) => urlObj.searchParams.append(key, value))
 
   const fullUrl = urlObj.toString()
