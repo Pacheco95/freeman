@@ -10,6 +10,7 @@ export default mergeConfig(
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       coverage: {
+        include: ['src/**/*.{ts,tsx,js,jsx,vue}'],
         exclude: [...configDefaults.exclude, 'src/components/ui/**'],
       },
     },

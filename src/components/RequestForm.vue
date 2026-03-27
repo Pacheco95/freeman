@@ -35,10 +35,14 @@ const handleSubmit = () => {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <fieldset id="test" class="flex">
+    <fieldset class="flex">
       <MethodSelect class="rounded-r-none border-r-0" v-model="method" />
-      <Input v-model="url" class="rounded-l-none border-l-0 rounded-r-none border-r-0" />
-      <Button class="rounded-l-none border-l-0">Submit</Button>
+      <Input
+        name="requestUrl"
+        v-model="url"
+        class="rounded-l-none border-l-0 rounded-r-none border-r-0"
+      />
+      <Button name="submitRequestForm" class="rounded-l-none border-l-0">Submit</Button>
     </fieldset>
   </form>
 </template>
