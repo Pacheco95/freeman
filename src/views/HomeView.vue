@@ -20,6 +20,7 @@ import ImportCurlDialog from '@/components/ImportCurlDialog.vue'
 import MenuBar from '@/components/MenuBar.vue'
 import { useUIStore } from '@/stores/ui.store.ts'
 import { isTauriEnv } from '@/util.ts'
+import WaitingResponse from '@/components/WaitingResponse.vue'
 
 type Obj = { key: string; value: string }
 
@@ -104,7 +105,12 @@ const handleSubmit = async (values: RequestFormData) => {
       </section>
 
       <section class="flex-1">
-        <Tabs class="h-full flex flex-col" default-value="body" :unmount-on-hide="false">
+        <Tabs
+          v-if="responseBody"
+          class="h-full flex flex-col"
+          default-value="body"
+          :unmount-on-hide="false"
+        >
           <div class="flex items-center gap-4">
             <TabsList>
               <TabsTrigger value="headers">Headers</TabsTrigger>
@@ -136,6 +142,7 @@ const handleSubmit = async (values: RequestFormData) => {
             <BodyEditor v-model="responseBody" :readOnly="true" />
           </TabsContent>
         </Tabs>
+        <WaitingResponse v-else />
       </section>
     </div>
   </main>
