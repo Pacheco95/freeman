@@ -16,9 +16,14 @@ import type { Request } from '@/types/Request.ts'
 import { makeRequest } from '@/services/request.service.ts'
 import HttpStatusIndicator from '@/components/HttpStatusIndicator.vue'
 import { useRequestStore } from '@/stores/request.store.ts'
+import ImportCurlDialog from '@/components/ImportCurlDialog.vue'
+import MenuBar from '@/components/MenuBar.vue'
+import { useUIStore } from '@/stores/ui.store.ts'
+import { isTauriEnv } from '@/util.ts'
 
 type Obj = { key: string; value: string }
 
+const ui = useUIStore()
 const requestStore = useRequestStore()
 const responseBody = ref('')
 
@@ -65,6 +70,9 @@ const handleSubmit = async (values: RequestFormData) => {
 
 <template>
   <main class="p-4 flex flex-col gap-4 h-screen">
+    <MenuBar v-if="!isTauriEnv()" />
+    <ImportCurlDialog v-model:open="ui.importModalOpen" />
+
     <RequestForm
       v-model:method="requestStore.method"
       v-model:url="requestStore.url"

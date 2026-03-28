@@ -3,13 +3,14 @@ import { useColorMode } from '@vueuse/core'
 import { Menu, MenuItem, Submenu } from '@tauri-apps/api/menu'
 import { onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui.store.ts'
+import { isTauriEnv } from '@/util.ts'
 
 useColorMode()
 
 const ui = useUIStore()
 
 onMounted(async () => {
-  if (!window.isTauri) {
+  if (!isTauriEnv()) {
     return
   }
 
