@@ -1,9 +1,7 @@
 import { defineStore } from 'pinia'
 import { nextTick, ref, watch } from 'vue'
-import type { Method } from '@/types/Request.ts'
-
-type KeyValue = { key: string; value: string }
-type ParamRow = { active: boolean; data: KeyValue }
+import type { Method, Request } from '@/types/Request.ts'
+import type { KeyValue, ParamRow } from '@/types/misc.ts'
 
 const URL_FALLBACK_BASE = 'https://localhost/'
 
@@ -90,7 +88,42 @@ export const useRequestStore = defineStore(
       { deep: true },
     )
 
-    return { activeTab, method, url, body, params, headers }
+    function setRequest(request: Request) {
+      syncing.value = true
+
+      method.value = request.method
+      body.value =
+        typeof request.body === 'string'
+          ? request.body
+          : request.body != null
+            ? JSON.stringify(request.body, null, 2)
+            : ''
+
+      headers.value = request.headers
+        ? [
+            ...request.headers.map((h) => ({ active: true, data: h })),
+            { active: false, data: { key: '', value: '' } },
+          ]
+        : []
+
+      url.value = request.url ?? ''
+
+      if (request.params?.length) {
+        params.value = [
+          ...request.params.map((p) => ({ active: true, data: p })),
+          { active: false, data: { key: '', value: '' } },
+        ]
+        url.value = mergeActiveParamsIntoUrl(url.value, params.value)
+      } else {
+        params.value = parseSearchToParamRows(url.value)
+      }
+
+      void nextTick(() => {
+        syncing.value = false
+      })
+    }
+
+    return { activeTab, method, url, body, params, headers, setRequest }
   },
   {
     persist: true,

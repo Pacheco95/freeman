@@ -17,6 +17,7 @@
         "pinia": "^3.0.4",
         "pinia-plugin-persistedstate": "^4.7.1",
         "reka-ui": "^2.9.2",
+        "sweet-curl-parser": "^1.0.4",
         "tailwind-merge": "^3.5.0",
         "tailwindcss": "^4.2.2",
         "vue": "^3.5.29",
@@ -1065,6 +1066,8 @@
     "superjson": ["superjson@2.2.6", "", { "dependencies": { "copy-anything": "^4" } }, "sha512-H+ue8Zo4vJmV2nRjpx86P35lzwDT3nItnIsocgumgr0hHMQ+ZGq5vrERg9kJBo5AWGmxZDhzDo+WVIJqkB0cGA=="],
 
     "supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
+
+    "sweet-curl-parser": ["sweet-curl-parser@1.0.4", "", {}, "sha512-hMcHEjK9MYmNryzYLyKsuEjNx1ep6ezFwONdTXeC5aLOPepvrnzpRhGxkRMbaw0py5wT7hTGzz6SY6lQ4TxrWQ=="],
 
     "symbol-tree": ["symbol-tree@3.2.4", "", {}, "sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw=="],
 

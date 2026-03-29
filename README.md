@@ -1,6 +1,8 @@
 # freeman
 
-This template should help get you started developing with Vue 3 in Vite.
+This application is a free open source alternative to the popular Postman application.
+It is built using Vue 3, Vite, and Bun.
+It also supports desktop builds using Tauri.
 
 ## Recommended IDE Setup
 

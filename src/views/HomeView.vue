@@ -67,12 +67,17 @@ const handleSubmit = async (values: RequestFormData) => {
     responseBody.value = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
   }
 }
+
+const handleCurlImport = (request: Request) => {
+  ui.closeImportModal()
+  requestStore.setRequest(request)
+}
 </script>
 
 <template>
   <main class="p-4 flex flex-col gap-4 h-screen">
     <MenuBar v-if="!isTauriEnv()" />
-    <ImportCurlDialog v-model:open="ui.importModalOpen" />
+    <ImportCurlDialog v-model:open="ui.importModalOpen" @submit="handleCurlImport" />
 
     <RequestForm
       v-model:method="requestStore.method"
