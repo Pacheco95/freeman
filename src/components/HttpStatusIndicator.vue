@@ -22,6 +22,6 @@ const style = computed(() => {
 <template>
   <div :class="style" class="rounded-sm border px-2 text-sm py-[0.2rem] align-middle">
     {{ status }}
-    {{ statusCode[status as keyof typeof statusCode] }}
+    {{ statusCode[status as keyof typeof statusCode] ?? 'Unknown Status' }}
   </div>
 </template>
