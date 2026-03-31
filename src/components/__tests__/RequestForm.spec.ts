@@ -14,7 +14,8 @@ describe('RequestForm', () => {
     const wrapper = mount(RequestForm, { props: { method: 'POST', url: 'https://example.com' } })
     await nextTick()
 
-    expect(wrapper.find('input[name="requestUrl"]').element.value).toBe('https://example.com')
+    const input = wrapper.find<HTMLInputElement>('input[name="requestUrl"]').element
+    expect(input.value).toBe('https://example.com')
     expect(wrapper.text()).toContain('POST')
   })
 
