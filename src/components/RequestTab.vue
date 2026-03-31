@@ -53,7 +53,7 @@ const editorLanguage = computed(() => syntaxToLanguage[tab.value.bodyRawSyntax])
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 flex-1">
+  <div class="flex flex-col gap-4 flex-1" data-testid="request-tab">
     <RequestForm
       :method="tab.method"
       :url="tab.url"
