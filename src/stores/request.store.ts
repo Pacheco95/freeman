@@ -17,6 +17,9 @@ function createTab(id: number): TabState {
     method: 'GET' as Method,
     url: '',
     body: '',
+    bodyType: 'none',
+    bodyRawSyntax: 'JSON',
+    bodyFormRows: [],
     params: [],
     headers: [],
   }

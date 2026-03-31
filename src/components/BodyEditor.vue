@@ -4,7 +4,7 @@
     class="border border-slate-200"
     :value="modelValue"
     :options="editorOptions"
-    language="json"
+    :language="language"
     @update:value="handleValueChange"
     @mount="handleMount"
   />
@@ -18,12 +18,14 @@ import { useColorMode } from '@vueuse/core'
 interface Props {
   modelValue: string
   readOnly?: boolean
+  language?: string
 }
 
 const mode = useColorMode()
 
 const props = withDefaults(defineProps<Props>(), {
   readOnly: false,
+  language: 'json',
 })
 
 const emit = defineEmits<{

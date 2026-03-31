@@ -49,12 +49,26 @@ const handleNewRequest = async () => {
   const tab = requestStore.activeTab
   const tabId = requestStore.activeTabId
   try {
+    let body: Request['body'] = undefined
+    if (tab.bodyType === 'raw') {
+      body = tab.body
+    } else if (tab.bodyType === 'form-data') {
+      const fd = new FormData()
+      tab.bodyFormRows.filter((r) => r.active).forEach((r) => fd.append(r.data.key, r.data.value))
+      body = fd
+    } else if (tab.bodyType === 'x-www-form-urlencoded') {
+      const params = new URLSearchParams()
+      tab.bodyFormRows
+        .filter((r) => r.active)
+        .forEach((r) => params.append(r.data.key, r.data.value))
+      body = params.toString()
+    }
     const request: Request = {
       method: tab.method,
       url: tab.url,
       params: tab.params.filter((p) => p.active).map((p) => p.data),
       headers: tab.headers.filter((h) => h.active).map((h) => h.data),
-      body: tab.body,
+      body,
     }
     const r = await makeRequest(request)
     responses.value[tabId] = { response: r, body: await r.text() }

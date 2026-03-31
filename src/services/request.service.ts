@@ -1,10 +1,10 @@
 import { type Request } from '@/types/Request.ts'
 
-const parseRequestBody = (body: Request['body']): string | undefined => {
+const parseRequestBody = (body: Request['body']): BodyInit | undefined => {
   if (!body) {
     return undefined
   }
-  if (typeof body === 'string') {
+  if (typeof body === 'string' || body instanceof FormData) {
     return body
   } else {
     return JSON.stringify(body)

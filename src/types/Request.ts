@@ -7,5 +7,5 @@ export type Request = {
   url: string
   params?: Array<{ key: string; value: string }>
   headers?: Array<{ key: string; value: string }>
-  body?: Record<string, unknown> | string
+  body?: Record<string, unknown> | string | FormData
 }
