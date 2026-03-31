@@ -2,19 +2,9 @@
 import { computed } from 'vue'
 import RequestForm, { type RequestFormData } from '@/components/RequestForm.vue'
 import ObjTable from '@/components/ObjTable.vue'
-import BodyEditor from '@/components/BodyEditor.vue'
+import BodyTabContent from '@/components/BodyTabContent.vue'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useRequestStore } from '@/stores/request.store.ts'
-import type { BodyRawSyntax, BodyType } from '@/types/misc.ts'
 
 type Obj = { key: string; value: string }
 
@@ -31,25 +21,6 @@ const columns = [
   title: string
   field: keyof Obj
 }>
-
-const bodyTypes: { value: BodyType; label: string }[] = [
-  { value: 'none', label: 'none' },
-  { value: 'form-data', label: 'form-data' },
-  { value: 'x-www-form-urlencoded', label: 'x-www-form-urlencoded' },
-  { value: 'raw', label: 'raw' },
-]
-
-const rawSyntaxOptions: BodyRawSyntax[] = ['JSON', 'Text', 'JavaScript', 'HTML', 'XML']
-
-const syntaxToLanguage: Record<BodyRawSyntax, string> = {
-  JSON: 'json',
-  Text: 'plaintext',
-  JavaScript: 'javascript',
-  HTML: 'html',
-  XML: 'xml',
-}
-
-const editorLanguage = computed(() => syntaxToLanguage[tab.value.bodyRawSyntax])
 </script>
 
 <template>
@@ -79,44 +50,13 @@ const editorLanguage = computed(() => syntaxToLanguage[tab.value.bodyRawSyntax])
       <TabsContent value="headers">
         <ObjTable :columns="columns" v-model:rows="tab.headers" />
       </TabsContent>
-      <TabsContent value="body" class="h-full flex flex-col gap-3">
-        <div class="flex items-center gap-4">
-          <RadioGroup
-            :model-value="tab.bodyType"
-            class="flex flex-row gap-4 min-h-8"
-            @update:model-value="tab.bodyType = $event as BodyType"
-          >
-            <div v-for="bt in bodyTypes" :key="bt.value" class="flex items-center space-x-2">
-              <RadioGroupItem :id="`body-type-${bt.value}`" :value="bt.value" />
-              <Label :for="`body-type-${bt.value}`">{{ bt.label }}</Label>
-            </div>
-          </RadioGroup>
-          <Select
-            v-if="tab.bodyType === 'raw'"
-            :model-value="tab.bodyRawSyntax"
-            @update:model-value="tab.bodyRawSyntax = $event as BodyRawSyntax"
-          >
-            <SelectTrigger class="w-36 h-7 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="syntax in rawSyntaxOptions" :key="syntax" :value="syntax">
-                {{ syntax }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <template v-if="tab.bodyType === 'form-data' || tab.bodyType === 'x-www-form-urlencoded'">
-          <ObjTable :columns="columns" v-model:rows="tab.bodyFormRows" />
-        </template>
-        <template v-else-if="tab.bodyType === 'raw'">
-          <BodyEditor
-            :model-value="tab.body"
-            :language="editorLanguage"
-            @update:model-value="tab.body = $event"
-          />
-        </template>
+      <TabsContent value="body">
+        <BodyTabContent
+          v-model:body-type="tab.bodyType"
+          v-model:body-raw-syntax="tab.bodyRawSyntax"
+          v-model:body="tab.body"
+          v-model:body-form-rows="tab.bodyFormRows"
+        />
       </TabsContent>
     </Tabs>
   </div>
