@@ -107,9 +107,7 @@ const editorLanguage = computed(() => syntaxToLanguage[tab.value.bodyRawSyntax])
           </Select>
         </div>
 
-        <template
-          v-if="tab.bodyType === 'form-data' || tab.bodyType === 'x-www-form-urlencoded'"
-        >
+        <template v-if="tab.bodyType === 'form-data' || tab.bodyType === 'x-www-form-urlencoded'">
           <ObjTable :columns="columns" v-model:rows="tab.bodyFormRows" />
         </template>
         <template v-else-if="tab.bodyType === 'raw'">

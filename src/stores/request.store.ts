@@ -98,12 +98,15 @@ export const useRequestStore = defineStore(
       syncing.value = true
 
       tab.method = request.method
-      tab.body =
-        typeof request.body === 'string'
-          ? request.body
-          : request.body != null
-            ? JSON.stringify(request.body, null, 2)
-            : ''
+      if (request.body != null) {
+        tab.body =
+          typeof request.body === 'string' ? request.body : JSON.stringify(request.body, null, 2)
+        tab.bodyType = 'raw'
+        tab.bodyRawSyntax = 'JSON'
+      } else {
+        tab.body = ''
+        tab.bodyType = 'none'
+      }
 
       tab.headers = request.headers
         ? [
@@ -129,7 +132,31 @@ export const useRequestStore = defineStore(
       })
     }
 
-    return { tabs, activeTabId, activeTab, nextTabId, addTab, closeTab, setRequest, _initWatchers }
+    function $reset() {
+      for (const handles of stopHandlesMap.values()) {
+        handles.forEach((h) => h())
+      }
+      stopHandlesMap.clear()
+      syncingMap.clear()
+
+      tabs.value = [createTab(1)]
+      activeTabId.value = 1
+      nextTabId.value = 2
+
+      registerWatchers(1)
+    }
+
+    return {
+      tabs,
+      activeTabId,
+      activeTab,
+      nextTabId,
+      addTab,
+      closeTab,
+      setRequest,
+      _initWatchers,
+      $reset,
+    }
   },
   {
     persist: {
