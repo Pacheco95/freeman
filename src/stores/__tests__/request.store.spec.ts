@@ -120,6 +120,114 @@ describe('request store', () => {
       expect(store.tabs).toHaveLength(1)
     })
 
+    describe('setRequest (cURL import)', () => {
+      it('sets method, url, headers, and raw body type for a JSON POST', async () => {
+        const store = useRequestStore()
+
+        store.setRequest({
+          method: 'POST',
+          url: 'https://api.example.com/posts',
+          headers: [{ key: 'Content-Type', value: 'application/json' }],
+          body: { title: 'foo', userId: 1 },
+        })
+        await flushStoreWatchers()
+
+        expect(store.activeTab.method).toBe('POST')
+        expect(store.activeTab.url).toBe('https://api.example.com/posts')
+        expect(store.activeTab.headers).toEqual([
+          { active: true, data: { key: 'Content-Type', value: 'application/json' } },
+          { active: false, data: { key: '', value: '' } },
+        ])
+        expect(store.activeTab.bodyType).toBe('raw')
+        expect(store.activeTab.bodyRawSyntax).toBe('JSON')
+        expect(store.activeTab.body).toBe(JSON.stringify({ title: 'foo', userId: 1 }, null, 2))
+      })
+
+      it('sets bodyType to none when body is absent', async () => {
+        const store = useRequestStore()
+
+        store.setRequest({ method: 'GET', url: 'https://api.example.com/posts' })
+        await flushStoreWatchers()
+
+        expect(store.activeTab.bodyType).toBe('none')
+        expect(store.activeTab.body).toBe('')
+      })
+
+      it('populates query params from url and strips them from the url field', async () => {
+        const store = useRequestStore()
+
+        store.setRequest({
+          method: 'POST',
+          url: 'https://api.example.com/search',
+          params: [
+            { key: 'page', value: '1' },
+            { key: 'limit', value: '20' },
+          ],
+          body: { query: 'test' },
+        })
+        await flushStoreWatchers()
+
+        expect(store.activeTab.params).toEqual([
+          { active: true, data: { key: 'page', value: '1' } },
+          { active: true, data: { key: 'limit', value: '20' } },
+          { active: false, data: { key: '', value: '' } },
+        ])
+      })
+
+      it('populates multiple headers', async () => {
+        const store = useRequestStore()
+
+        store.setRequest({
+          method: 'PUT',
+          url: 'https://api.example.com/posts/1',
+          headers: [
+            { key: 'Content-Type', value: 'application/json' },
+            { key: 'Authorization', value: 'Bearer token123' },
+          ],
+          body: { title: 'updated' },
+        })
+        await flushStoreWatchers()
+
+        expect(store.activeTab.headers).toEqual([
+          { active: true, data: { key: 'Content-Type', value: 'application/json' } },
+          { active: true, data: { key: 'Authorization', value: 'Bearer token123' } },
+          { active: false, data: { key: '', value: '' } },
+        ])
+      })
+
+      it('handles a string body and sets raw body type', async () => {
+        const store = useRequestStore()
+
+        store.setRequest({
+          method: 'POST',
+          url: 'https://api.example.com/raw',
+          body: '{"raw":true}',
+        })
+        await flushStoreWatchers()
+
+        expect(store.activeTab.bodyType).toBe('raw')
+        expect(store.activeTab.bodyRawSyntax).toBe('JSON')
+        expect(store.activeTab.body).toBe('{"raw":true}')
+      })
+
+      it('overwrites previous body state when importing into an existing tab', async () => {
+        const store = useRequestStore()
+
+        store.setRequest({
+          method: 'POST',
+          url: 'https://api.example.com/first',
+          body: { step: 1 },
+        })
+        await flushStoreWatchers()
+
+        store.setRequest({ method: 'GET', url: 'https://api.example.com/second' })
+        await flushStoreWatchers()
+
+        expect(store.activeTab.bodyType).toBe('none')
+        expect(store.activeTab.body).toBe('')
+      })
+    })
+
     it('setRequest applies only to the active tab', async () => {
       const store = useRequestStore()
       store.addTab()
