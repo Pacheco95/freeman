@@ -1,75 +1,57 @@
-# freeman
+# Freeman
 
-This application is a free open source alternative to the popular Postman application.
-It is built using Vue 3, Vite, and Bun.
-It also supports desktop builds using Tauri.
+A free, open-source desktop HTTP client — a self-hosted alternative to Postman/Insomnia.
 
-## Recommended IDE Setup
+Built with **Vue 3**, **Vite**, **Bun**, and **Tauri** (for desktop builds).
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Showcase
 
-## Recommended Browser Setup
+<p align="center">
+  <img src="docs/home-iPhone.png" alt="Freeman on iPhone" height="480" />
+  <img src="docs/home-iPad.png" alt="Freeman on iPad" height="480" />
+</p>
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+## Features
 
-## Type Support for `.vue` Imports in TS
+- Send HTTP requests (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
+- Manage query params, headers, and request body
+- Body types: raw (JSON, JavaScript, HTML, XML, Text), form-data, x-www-form-urlencoded
+- Import requests from cURL commands
+- Multiple request tabs with persistent state
+- Response viewer with headers and body (syntax-highlighted)
+- Dark/light mode
+- Desktop app via Tauri
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## Getting Started
 
 ```sh
 bun install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
 bun dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## Building
 
 ```sh
-bun run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-bun test:unit
-```
-
-### Run End-to-End Tests with [Playwright](https://playwright.dev)
-
-```sh
-# Install browsers for the first run
-npx playwright install
-
-# When testing on CI, must build the project first
+# Web
 bun run build
 
-# Runs the end-to-end tests
-bun test:e2e
-# Runs the tests only on Chromium
-bun test:e2e --project=chromium
-# Runs the tests of a specific file
-bun test:e2e tests/example.spec.ts
-# Runs the tests in debug mode
-bun test:e2e --debug
+# Desktop (requires Tauri CLI)
+bun run tauri build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+## Testing
 
 ```sh
-bun lint
+bun test:unit       # Unit tests (Vitest)
+bun test:e2e        # End-to-end tests (Playwright)
+bun lint            # Lint
+bun run type-check  # Type-check
 ```
+
+## Contributing
+
+Contributions are welcome. Please open an issue before submitting a pull request for significant changes.
+
+## License
+
+[MIT](./LICENSE)
