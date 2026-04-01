@@ -94,7 +94,7 @@ const handleCurlImport = (request: Request) => {
                 @submit="handleNewRequest"
               />
             </ResizablePanel>
-            <ResizableHandle />
+            <ResizableHandle with-handle class="mt-3" />
             <ResizablePanel :default-size="50" class="flex flex-col min-h-0 mt-2">
               <ResponsePanel :response="currentResponse?.response" :body="currentResponse?.body" />
             </ResizablePanel>
@@ -102,7 +102,7 @@ const handleCurlImport = (request: Request) => {
         </ResizablePanel>
 
         <template v-if="codeToolbarOpen">
-          <ResizableHandle />
+          <ResizableHandle with-handle class="mx-2" />
           <ResizablePanel :default-size="25" :min-size="10" class="flex flex-col min-h-0">
             <CodeExportToolbar @close="codeToolbarOpen = false" />
           </ResizablePanel>
