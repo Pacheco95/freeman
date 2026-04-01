@@ -110,13 +110,13 @@ const handleCurlImport = (request: Request) => {
             <CodeExportToolbar @close="codeToolbarOpen = false" />
           </ResizablePanel>
         </template>
-
-        <Sheet v-if="isMobile" v-model:open="codeToolbarOpen">
-          <SheetContent>
-            <CodeExportToolbar @close="codeToolbarOpen = false" />
-          </SheetContent>
-        </Sheet>
       </ResizablePanelGroup>
+
+      <Sheet v-if="isMobile" v-model:open="codeToolbarOpen">
+        <SheetContent side="bottom" class="h-[80vh]">
+          <CodeExportToolbar @close="codeToolbarOpen = false" />
+        </SheetContent>
+      </Sheet>
 
       <div class="flex flex-col items-center border-l pl-4 shrink-0 mx-auto">
         <Button
