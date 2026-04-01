@@ -95,7 +95,7 @@ const handleCurlImport = (request: Request) => {
               />
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
+            <ResizablePanel :default-size="50" class="flex flex-col min-h-0 mt-2">
               <ResponsePanel :response="currentResponse?.response" :body="currentResponse?.body" />
             </ResizablePanel>
           </ResizablePanelGroup>

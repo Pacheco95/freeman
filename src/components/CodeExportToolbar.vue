@@ -9,9 +9,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import BodyEditor from '@/components/BodyEditor.vue'
 import { useRequestStore } from '@/stores/request.store.ts'
 import { generateCode, EXPORT_FORMATS } from '@/services/export.service.ts'
 import type { ExportFormat } from '@/services/export.service.ts'
+
+const LANGUAGE_MAP: Record<ExportFormat, string> = {
+  curl: 'shell',
+  'js-fetch': 'javascript',
+  'node-axios': 'javascript',
+  'python-requests': 'python',
+  'java-okhttp': 'java',
+  'php-curl': 'php',
+  'csharp-httpclient': 'csharp',
+}
 
 defineEmits<{ close: [] }>()
 
@@ -21,6 +32,7 @@ const selectedFormat = ref<ExportFormat>('curl')
 const copied = ref(false)
 
 const code = computed(() => generateCode(requestStore.activeTab, selectedFormat.value))
+const language = computed(() => LANGUAGE_MAP[selectedFormat.value])
 
 async function copyCode() {
   await navigator.clipboard.writeText(code.value)
@@ -61,21 +73,18 @@ async function copyCode() {
     </div>
 
     <!-- Code display -->
-    <div class="flex-1 relative min-h-0 overflow-hidden flex flex-col">
+    <div class="flex-1 relative min-h-0 flex flex-col">
       <Button
         variant="ghost"
         size="icon"
-        class="absolute top-2 right-2 z-10 h-7 w-7 bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+        class="absolute top-2 right-2 z-10 h-7 w-7 opacity-70 hover:opacity-100"
         :title="copied ? 'Copied!' : 'Copy to clipboard'"
         @click="copyCode"
       >
         <Check v-if="copied" class="h-3.5 w-3.5" />
         <Copy v-else class="h-3.5 w-3.5" />
       </Button>
-      <pre
-        class="flex-1 overflow-auto p-3 text-xs font-mono bg-zinc-950 text-zinc-100 leading-relaxed"
-        >{{ code }}</pre
-      >
+      <BodyEditor :model-value="code" read-only :language="language" />
     </div>
   </div>
 </template>
