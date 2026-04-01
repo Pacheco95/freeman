@@ -12,9 +12,11 @@ import { isTauriEnv } from '@/util.ts'
 import RequestTab from '@/components/RequestTab.vue'
 import RequestTabBar from '@/components/RequestTabBar.vue'
 import ResponsePanel from '@/components/ResponsePanel.vue'
+import { ScrollAreaCorner, ScrollAreaRoot, ScrollAreaViewport } from 'reka-ui'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { ScrollBar } from '@/components/ui/scroll-area'
 import CodeExportToolbar from '@/components/CodeExportToolbar.vue'
 
 type TabResponse = { response: Response | null; body: string }
@@ -77,12 +79,30 @@ const handleCurlImport = (request: Request) => {
     <MenuBar v-if="!isTauriEnv()" />
     <ImportCurlDialog v-model:open="ui.importModalOpen" @submit="handleCurlImport" />
 
-    <RequestTabBar
-      v-model:activeTabId="requestStore.activeTabId"
-      :tabs="requestStore.tabs"
-      @close-tab="requestStore.closeTab"
-      @add-tab="requestStore.addTab"
-    />
+    <div class="flex items-center gap-2">
+      <ScrollAreaRoot class="relative flex-1 min-w-0">
+        <ScrollAreaViewport class="w-full">
+          <RequestTabBar
+            v-model:activeTabId="requestStore.activeTabId"
+            :tabs="requestStore.tabs"
+            @close-tab="requestStore.closeTab"
+            @add-tab="requestStore.addTab"
+          />
+        </ScrollAreaViewport>
+        <ScrollBar orientation="horizontal" />
+        <ScrollAreaCorner />
+      </ScrollAreaRoot>
+      <Button
+        class="md:hidden shrink-0 h-8 w-8"
+        variant="ghost"
+        size="icon"
+        :class="{ 'bg-accent': codeToolbarOpen }"
+        title="Code snippet"
+        @click="codeToolbarOpen = !codeToolbarOpen"
+      >
+        <Code2 class="h-4 w-4" />
+      </Button>
+    </div>
 
     <div class="flex flex-1 min-h-0">
       <ResizablePanelGroup direction="horizontal" class="flex-1 min-h-0">
@@ -112,13 +132,13 @@ const handleCurlImport = (request: Request) => {
         </template>
       </ResizablePanelGroup>
 
-      <Sheet v-if="isMobile" v-model:open="codeToolbarOpen">
-        <SheetContent side="bottom" class="h-[80vh]">
-          <CodeExportToolbar @close="codeToolbarOpen = false" />
-        </SheetContent>
-      </Sheet>
+      <Dialog v-if="isMobile" v-model:open="codeToolbarOpen">
+        <DialogContent class="flex flex-col gap-0 p-0 h-[80vh] overflow-hidden">
+          <CodeExportToolbar :show-close-button="false" />
+        </DialogContent>
+      </Dialog>
 
-      <div class="flex flex-col items-center border-l pl-4 shrink-0 mx-auto">
+      <div class="hidden md:flex flex-col items-center border-l pl-4 shrink-0 mx-auto">
         <Button
           variant="ghost"
           size="icon"

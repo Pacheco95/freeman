@@ -24,6 +24,7 @@ const LANGUAGE_MAP: Record<ExportFormat, string> = {
   'csharp-httpclient': 'csharp',
 }
 
+withDefaults(defineProps<{ showCloseButton?: boolean }>(), { showCloseButton: true })
 defineEmits<{ close: [] }>()
 
 const requestStore = useRequestStore()
@@ -46,9 +47,15 @@ async function copyCode() {
 <template>
   <div class="h-full flex flex-col">
     <!-- Header -->
-    <div class="flex items-center justify-between px-3 py-2 border-b flex-shrink-0">
+    <div class="flex items-center justify-between px-3 py-2 border-b shrink-0">
       <span class="text-sm font-medium">Code Snippet</span>
-      <Button variant="ghost" size="icon" class="h-7 w-7" @click="$emit('close')">
+      <Button
+        v-if="showCloseButton"
+        variant="ghost"
+        size="icon"
+        class="h-7 w-7"
+        @click="$emit('close')"
+      >
         <X class="h-3.5 w-3.5" />
       </Button>
     </div>
