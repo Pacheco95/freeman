@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
-import { Code2 } from 'lucide-vue-next'
+import { Code2, Plus } from 'lucide-vue-next'
 import type { Request } from '@/types/Request.ts'
 import { makeRequest } from '@/services/request.service.ts'
 import { useRequestStore } from '@/stores/request.store.ts'
@@ -80,13 +80,15 @@ const handleCurlImport = (request: Request) => {
     <ImportCurlDialog v-model:open="ui.importModalOpen" @submit="handleCurlImport" />
 
     <div class="flex items-center gap-2">
+      <Button variant="ghost" size="sm" class="shrink-0" @click="requestStore.addTab()">
+        <Plus class="h-4 w-4" />
+      </Button>
       <ScrollAreaRoot class="relative flex-1 min-w-0">
         <ScrollAreaViewport class="w-full">
           <RequestTabBar
             v-model:activeTabId="requestStore.activeTabId"
             :tabs="requestStore.tabs"
             @close-tab="requestStore.closeTab"
-            @add-tab="requestStore.addTab"
           />
         </ScrollAreaViewport>
         <ScrollBar orientation="horizontal" />
