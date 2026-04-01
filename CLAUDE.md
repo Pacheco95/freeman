@@ -58,6 +58,7 @@ HomeView
 ### UI Components
 
 `src/components/ui/` contains ShadCN Vue components styled with Tailwind CSS. Prefer composing from these rather than adding new UI dependencies.
+You may install new ShadCN components via `bunx --bun shadcn-vue@latest <component>` but you are not allowed to modify them or changing any of the existing components in the `src/components/ui/` directory.
 
 ### Tauri Integration
 
