@@ -11,6 +11,7 @@ import RequestTab from '@/components/RequestTab.vue'
 import RequestTabBar from '@/components/RequestTabBar.vue'
 import ResponsePanel from '@/components/ResponsePanel.vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
+import CodeExportToolbar from '@/components/CodeExportToolbar.vue'
 
 type TabResponse = { response: Response | null; body: string }
 
@@ -76,20 +77,23 @@ const handleCurlImport = (request: Request) => {
       @add-tab="requestStore.addTab"
     />
 
-    <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
-      <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
-        <RequestTab
-          v-for="tab in requestStore.tabs"
-          v-show="tab.id === requestStore.activeTabId"
-          :key="tab.id"
-          :tab-id="tab.id"
-          @submit="handleNewRequest"
-        />
-      </ResizablePanel>
-      <ResizableHandle />
-      <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
-        <ResponsePanel :response="currentResponse?.response" :body="currentResponse?.body" />
-      </ResizablePanel>
-    </ResizablePanelGroup>
+    <div class="flex flex-1 min-h-0">
+      <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
+        <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
+          <RequestTab
+            v-for="tab in requestStore.tabs"
+            v-show="tab.id === requestStore.activeTabId"
+            :key="tab.id"
+            :tab-id="tab.id"
+            @submit="handleNewRequest"
+          />
+        </ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
+          <ResponsePanel :response="currentResponse?.response" :body="currentResponse?.body" />
+        </ResizablePanel>
+      </ResizablePanelGroup>
+      <CodeExportToolbar />
+    </div>
   </main>
 </template>
