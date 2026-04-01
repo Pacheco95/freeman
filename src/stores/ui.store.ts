@@ -12,5 +12,8 @@ export const useUIStore = defineStore('ui', {
     closeImportModal() {
       this.importModalOpen = false
     },
+    $reset() {
+      this.importModalOpen = false
+    },
   },
 })
