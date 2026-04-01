@@ -10,6 +10,7 @@ import { isTauriEnv } from '@/util.ts'
 import RequestTab from '@/components/RequestTab.vue'
 import RequestTabBar from '@/components/RequestTabBar.vue'
 import ResponsePanel from '@/components/ResponsePanel.vue'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 
 type TabResponse = { response: Response | null; body: string }
 
@@ -75,14 +76,20 @@ const handleCurlImport = (request: Request) => {
       @add-tab="requestStore.addTab"
     />
 
-    <RequestTab
-      v-for="tab in requestStore.tabs"
-      v-show="tab.id === requestStore.activeTabId"
-      :key="tab.id"
-      :tab-id="tab.id"
-      @submit="handleNewRequest"
-    />
-
-    <ResponsePanel :response="currentResponse?.response" :body="currentResponse?.body" />
+    <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
+      <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
+        <RequestTab
+          v-for="tab in requestStore.tabs"
+          v-show="tab.id === requestStore.activeTabId"
+          :key="tab.id"
+          :tab-id="tab.id"
+          @submit="handleNewRequest"
+        />
+      </ResizablePanel>
+      <ResizableHandle />
+      <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
+        <ResponsePanel :response="currentResponse?.response" :body="currentResponse?.body" />
+      </ResizablePanel>
+    </ResizablePanelGroup>
   </main>
 </template>
