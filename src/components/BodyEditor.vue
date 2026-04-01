@@ -1,13 +1,15 @@
 <template>
-  <vue-monaco-editor
-    style="height: 100%"
-    class="border border-slate-200"
-    :value="modelValue"
-    :options="editorOptions"
-    :language="language"
-    @update:value="handleValueChange"
-    @mount="handleMount"
-  />
+  <div class="flex-1 min-h-0">
+    <vue-monaco-editor
+      style="height: 100%"
+      class="border border-slate-200"
+      :value="modelValue"
+      :options="editorOptions"
+      :language="language"
+      @update:value="handleValueChange"
+      @mount="handleMount"
+    />
+  </div>
 </template>
 
 <script lang="ts" setup>

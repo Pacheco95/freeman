@@ -24,7 +24,7 @@ const columns = [
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 flex-1" data-testid="request-tab">
+  <div class="flex flex-col gap-4 flex-1 min-h-0" data-testid="request-tab">
     <RequestForm
       :method="tab.method"
       :url="tab.url"
@@ -34,7 +34,7 @@ const columns = [
     />
 
     <Tabs
-      class="flex-1 flex flex-col"
+      class="flex-1 flex flex-col min-h-0"
       :model-value="tab.panelTab"
       :unmount-on-hide="false"
       @update:model-value="tab.panelTab = $event as string"
@@ -50,7 +50,7 @@ const columns = [
       <TabsContent value="headers">
         <ObjTable :columns="columns" v-model:rows="tab.headers" />
       </TabsContent>
-      <TabsContent value="body">
+      <TabsContent value="body" class="min-h-0 flex flex-col">
         <BodyTabContent
           v-model:body-type="tab.bodyType"
           v-model:body-raw-syntax="tab.bodyRawSyntax"

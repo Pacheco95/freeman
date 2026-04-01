@@ -30,8 +30,13 @@ const responseHeaders = computed<KeyValue[]>(() => {
 </script>
 
 <template>
-  <section class="flex-1">
-    <Tabs v-if="body" class="h-full flex flex-col" default-value="body" :unmount-on-hide="false">
+  <section class="flex-1 flex flex-col min-h-0">
+    <Tabs
+      v-if="body"
+      class="flex-1 flex flex-col min-h-0"
+      default-value="body"
+      :unmount-on-hide="false"
+    >
       <div class="flex items-center gap-4">
         <TabsList>
           <TabsTrigger value="headers">Headers</TabsTrigger>
@@ -55,7 +60,7 @@ const responseHeaders = computed<KeyValue[]>(() => {
           </TableBody>
         </Table>
       </TabsContent>
-      <TabsContent value="body" class="h-full flex flex-col">
+      <TabsContent value="body" class="min-h-0 flex flex-col">
         <BodyEditor :model-value="body ?? ''" :readOnly="true" />
       </TabsContent>
     </Tabs>
