@@ -89,6 +89,7 @@ const handleCurlImport = (request: Request) => {
             v-model:activeTabId="requestStore.activeTabId"
             :tabs="requestStore.tabs"
             @close-tab="requestStore.closeTab"
+            @rename-tab="requestStore.renameTab"
           />
         </ScrollAreaViewport>
         <ScrollBar orientation="horizontal" />

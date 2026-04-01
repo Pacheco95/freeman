@@ -77,6 +77,11 @@ export const useRequestStore = defineStore(
       activeTabId.value = id
     }
 
+    function renameTab(id: number, label: string) {
+      const tab = tabs.value.find((t) => t.id === id)
+      if (tab) tab.label = label
+    }
+
     function closeTab(id: number) {
       if (tabs.value.length <= 1) return
 
@@ -153,6 +158,7 @@ export const useRequestStore = defineStore(
       nextTabId,
       addTab,
       closeTab,
+      renameTab,
       setRequest,
       _initWatchers,
       $reset,
