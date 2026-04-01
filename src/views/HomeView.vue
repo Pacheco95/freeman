@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { Code2 } from 'lucide-vue-next'
 import type { Request } from '@/types/Request.ts'
 import { makeRequest } from '@/services/request.service.ts'
 import { useRequestStore } from '@/stores/request.store.ts'
@@ -11,12 +12,15 @@ import RequestTab from '@/components/RequestTab.vue'
 import RequestTabBar from '@/components/RequestTabBar.vue'
 import ResponsePanel from '@/components/ResponsePanel.vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
+import { Button } from '@/components/ui/button'
 import CodeExportToolbar from '@/components/CodeExportToolbar.vue'
 
 type TabResponse = { response: Response | null; body: string }
 
 const ui = useUIStore()
 const requestStore = useRequestStore()
+
+const codeToolbarOpen = ref(false)
 
 const responses = ref<Record<number, TabResponse>>({})
 const currentResponse = computed<TabResponse | undefined>(
@@ -78,22 +82,45 @@ const handleCurlImport = (request: Request) => {
     />
 
     <div class="flex flex-1 min-h-0">
-      <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
-        <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
-          <RequestTab
-            v-for="tab in requestStore.tabs"
-            v-show="tab.id === requestStore.activeTabId"
-            :key="tab.id"
-            :tab-id="tab.id"
-            @submit="handleNewRequest"
-          />
+      <ResizablePanelGroup direction="horizontal" class="flex-1 min-h-0">
+        <ResizablePanel class="flex flex-col min-h-0">
+          <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
+            <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
+              <RequestTab
+                v-for="tab in requestStore.tabs"
+                v-show="tab.id === requestStore.activeTabId"
+                :key="tab.id"
+                :tab-id="tab.id"
+                @submit="handleNewRequest"
+              />
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
+              <ResponsePanel :response="currentResponse?.response" :body="currentResponse?.body" />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </ResizablePanel>
-        <ResizableHandle />
-        <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
-          <ResponsePanel :response="currentResponse?.response" :body="currentResponse?.body" />
-        </ResizablePanel>
+
+        <template v-if="codeToolbarOpen">
+          <ResizableHandle />
+          <ResizablePanel :default-size="25" :min-size="10" class="flex flex-col min-h-0">
+            <CodeExportToolbar @close="codeToolbarOpen = false" />
+          </ResizablePanel>
+        </template>
       </ResizablePanelGroup>
-      <CodeExportToolbar />
+
+      <div class="flex flex-col items-center border-l pl-4 shrink-0 mx-auto">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8"
+          :class="{ 'bg-accent': codeToolbarOpen }"
+          title="Code snippet"
+          @click="codeToolbarOpen = !codeToolbarOpen"
+        >
+          <Code2 class="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   </main>
 </template>
