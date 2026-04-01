@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { Code2 } from 'lucide-vue-next'
 import type { Request } from '@/types/Request.ts'
 import { makeRequest } from '@/services/request.service.ts'
@@ -13,6 +14,7 @@ import RequestTabBar from '@/components/RequestTabBar.vue'
 import ResponsePanel from '@/components/ResponsePanel.vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import CodeExportToolbar from '@/components/CodeExportToolbar.vue'
 
 type TabResponse = { response: Response | null; body: string }
@@ -20,6 +22,7 @@ type TabResponse = { response: Response | null; body: string }
 const ui = useUIStore()
 const requestStore = useRequestStore()
 
+const isMobile = useMediaQuery('(max-width: 767px)')
 const codeToolbarOpen = ref(false)
 
 const responses = ref<Record<number, TabResponse>>({})
@@ -101,12 +104,18 @@ const handleCurlImport = (request: Request) => {
           </ResizablePanelGroup>
         </ResizablePanel>
 
-        <template v-if="codeToolbarOpen">
+        <template v-if="codeToolbarOpen && !isMobile">
           <ResizableHandle with-handle class="mx-2" />
           <ResizablePanel :default-size="25" :min-size="10" class="flex flex-col min-h-0">
             <CodeExportToolbar @close="codeToolbarOpen = false" />
           </ResizablePanel>
         </template>
+
+        <Sheet v-if="isMobile" v-model:open="codeToolbarOpen">
+          <SheetContent>
+            <CodeExportToolbar @close="codeToolbarOpen = false" />
+          </SheetContent>
+        </Sheet>
       </ResizablePanelGroup>
 
       <div class="flex flex-col items-center border-l pl-4 shrink-0 mx-auto">
