@@ -120,6 +120,49 @@ describe('request store', () => {
       expect(store.tabs).toHaveLength(1)
     })
 
+    describe('renameTab', () => {
+      it('updates the label of the specified tab', () => {
+        const store = useRequestStore()
+        store.renameTab(1, 'My API')
+        expect(store.tabs[0]!.label).toBe('My API')
+      })
+
+      it('does not change the tab id', () => {
+        const store = useRequestStore()
+        store.renameTab(1, 'New Name')
+        expect(store.tabs[0]!.id).toBe(1)
+      })
+
+      it('does not affect other tabs', async () => {
+        const store = useRequestStore()
+        store.addTab()
+        await flushStoreWatchers()
+
+        store.renameTab(1, 'Renamed')
+
+        expect(store.tabs[0]!.label).toBe('Renamed')
+        expect(store.tabs[1]!.label).toBe('Request 2')
+      })
+
+      it('allows duplicate names across tabs', async () => {
+        const store = useRequestStore()
+        store.addTab()
+        await flushStoreWatchers()
+
+        store.renameTab(1, 'Same Name')
+        store.renameTab(2, 'Same Name')
+
+        expect(store.tabs[0]!.label).toBe('Same Name')
+        expect(store.tabs[1]!.label).toBe('Same Name')
+      })
+
+      it('is a no-op for a non-existent tab id', () => {
+        const store = useRequestStore()
+        store.renameTab(999, 'Ghost')
+        expect(store.tabs[0]!.label).toBe('Request 1')
+      })
+    })
+
     describe('setRequest (cURL import)', () => {
       it('sets method, url, headers, and raw body type for a JSON POST', async () => {
         const store = useRequestStore()
