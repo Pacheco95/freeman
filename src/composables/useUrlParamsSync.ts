@@ -14,7 +14,6 @@ export function parseSearchToParamRows(urlStr: string): ParamRow[] {
   } catch {
     return []
   }
-  rows.push({ active: false, data: { key: '', value: '' } })
   return rows
 }
 

@@ -14,12 +14,12 @@ describe('request store', () => {
     await flushStoreWatchers()
   })
 
-  it('initializes params with one inactive empty param', async () => {
+  it('initializes params as empty when url is empty', async () => {
     const store = useRequestStore()
     await flushStoreWatchers()
 
     expect(store.activeTab.url).toBe('')
-    expect(store.activeTab.params).toEqual([{ active: false, data: { key: '', value: '' } }])
+    expect(store.activeTab.params).toEqual([])
   })
 
   it('updates params when url query changes', async () => {
@@ -32,7 +32,6 @@ describe('request store', () => {
       { active: true, data: { key: 'foo', value: 'bar' } },
       { active: true, data: { key: 'foo', value: 'baz' } },
       { active: true, data: { key: 'x', value: '1' } },
-      { active: false, data: { key: '', value: '' } },
     ])
   })
 
@@ -213,7 +212,6 @@ describe('request store', () => {
         expect(store.activeTab.params).toEqual([
           { active: true, data: { key: 'page', value: '1' } },
           { active: true, data: { key: 'limit', value: '20' } },
-          { active: false, data: { key: '', value: '' } },
         ])
       })
 
@@ -367,7 +365,6 @@ describe('request store', () => {
 
         expect(store.activeTab.params).toEqual([
           { active: true, data: { key: 'q', value: 'test' } },
-          { active: false, data: { key: '', value: '' } },
         ])
       })
     })
@@ -380,10 +377,7 @@ describe('request store', () => {
       store.activeTab.url = 'https://example.com?q=test'
       await flushStoreWatchers()
 
-      expect(store.activeTab.params).toEqual([
-        { active: true, data: { key: 'q', value: 'test' } },
-        { active: false, data: { key: '', value: '' } },
-      ])
+      expect(store.activeTab.params).toEqual([{ active: true, data: { key: 'q', value: 'test' } }])
     })
   })
 })
