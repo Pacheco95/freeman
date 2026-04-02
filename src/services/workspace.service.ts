@@ -4,34 +4,43 @@ import { join } from '@tauri-apps/api/path'
 import type { TabState } from '@/types/misc.ts'
 
 export type WorkspaceData = {
-  tabs: TabState[]
-  activeTabId: number
-  nextTabId: number
+  name: string
+  requests: TabState[]
+  openRequestIds: number[]
+  activeRequestId: number
+  nextRequestId: number
 }
 
 type WorkspaceMeta = {
   version: number
-  activeTabId: number
+  name: string
+  openRequestIds: number[]
+  activeRequestId: number
 }
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[<>:"/\\|?*]/g, '_').trim() || 'request'
 }
 
-export async function saveWorkspace(tabs: TabState[], activeTabId: number): Promise<boolean> {
+export async function saveWorkspace(
+  requests: TabState[],
+  openRequestIds: number[],
+  activeRequestId: number,
+  name: string,
+): Promise<boolean> {
   const dir = await open({ directory: true, title: 'Select Workspace Folder' })
   if (dir === null) return false
 
   const requestsDir = await join(dir, 'requests')
   await mkdir(requestsDir, { recursive: true })
 
-  const meta: WorkspaceMeta = { version: 1, activeTabId }
+  const meta: WorkspaceMeta = { version: 2, name, openRequestIds, activeRequestId }
   await writeTextFile(await join(dir, 'workspace.json'), JSON.stringify(meta, null, 2))
 
-  for (let i = 0; i < tabs.length; i++) {
-    const tab = tabs[i]!
-    const filename = `${tab.id}-${sanitizeFilename(tab.label)}.json`
-    await writeTextFile(await join(requestsDir, filename), JSON.stringify(tab, null, 2))
+  for (let i = 0; i < requests.length; i++) {
+    const request = requests[i]!
+    const filename = `${request.id}-${sanitizeFilename(request.label)}.json`
+    await writeTextFile(await join(requestsDir, filename), JSON.stringify(request, null, 2))
   }
 
   return true
@@ -46,16 +55,26 @@ export async function loadWorkspace(): Promise<WorkspaceData | null> {
   const requestsDir = await join(dir, 'requests')
   const entries = await readDir(requestsDir)
 
-  const tabs: TabState[] = []
+  const requests: TabState[] = []
   for (const entry of entries) {
     if (entry.name.endsWith('.json')) {
       const content = await readTextFile(await join(requestsDir, entry.name))
-      tabs.push(JSON.parse(content) as TabState)
+      requests.push(JSON.parse(content) as TabState)
     }
   }
 
-  tabs.sort((a, b) => a.id - b.id)
-  const nextTabId = tabs.length > 0 ? Math.max(...tabs.map((t) => t.id)) + 1 : 1
+  requests.sort((a, b) => a.id - b.id)
+  const nextRequestId = requests.length > 0 ? Math.max(...requests.map((r) => r.id)) + 1 : 1
 
-  return { tabs, activeTabId: meta.activeTabId, nextTabId }
+  // Handle v1 workspaces (only had tabs, no openRequestIds)
+  const openRequestIds = meta.openRequestIds ?? requests.map((r) => r.id)
+  const activeRequestId = meta.activeRequestId ?? requests[0]?.id ?? 1
+
+  return {
+    name: meta.name ?? 'Imported Workspace',
+    requests,
+    openRequestIds,
+    activeRequestId,
+    nextRequestId,
+  }
 }

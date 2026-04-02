@@ -2,14 +2,14 @@ import { computed, nextTick, ref } from 'vue'
 import type { Ref, WatchStopHandle } from 'vue'
 import { defineStore } from 'pinia'
 import type { Method, Request } from '@/types/Request.ts'
-import type { TabState } from '@/types/misc.ts'
+import type { TabState, Workspace } from '@/types/misc.ts'
 import {
   mergeActiveParamsIntoUrl,
   parseSearchToParamRows,
   useUrlParamsSync,
 } from '@/composables/useUrlParamsSync.ts'
 
-function createTab(id: number): TabState {
+function createRequest(id: number): TabState {
   return {
     id,
     label: `Request ${id}`,
@@ -25,76 +25,153 @@ function createTab(id: number): TabState {
   }
 }
 
+function createWorkspace(id: number, name: string): Workspace {
+  return {
+    id,
+    name,
+    requests: [createRequest(1)],
+    openRequestIds: [1],
+    activeRequestId: 1,
+    nextRequestId: 2,
+  }
+}
+
 export const useRequestStore = defineStore(
   'request',
   () => {
-    const tabs = ref<TabState[]>([createTab(1)])
-    const activeTabId = ref<number>(1)
-    const nextTabId = ref<number>(2)
+    const workspaces = ref<Workspace[]>([createWorkspace(1, 'My Workspace')])
+    const activeWorkspaceId = ref<number>(1)
+    const nextWorkspaceId = ref<number>(2)
 
-    const activeTab = computed(() => tabs.value.find((t) => t.id === activeTabId.value)!)
+    const activeWorkspace = computed(
+      () => workspaces.value.find((w) => w.id === activeWorkspaceId.value)!,
+    )
 
+    // tabs = requests that are currently open as tabs (backward-compatible)
+    const tabs = computed(() =>
+      activeWorkspace.value.requests.filter((r) =>
+        activeWorkspace.value.openRequestIds.includes(r.id),
+      ),
+    )
+
+    const activeTabId = computed({
+      get: () => activeWorkspace.value.activeRequestId,
+      set: (v: number) => {
+        activeWorkspace.value.activeRequestId = v
+      },
+    })
+
+    const activeTab = computed(
+      () => activeWorkspace.value.requests.find((r) => r.id === activeTabId.value)!,
+    )
+
+    // Watcher management — keyed by request ID, scoped to the active workspace
     const syncingMap = new Map<number, Ref<boolean>>()
     const stopHandlesMap = new Map<number, WatchStopHandle[]>()
 
     function registerWatchers(id: number) {
+      if (stopHandlesMap.has(id)) return
       const syncingRef = ref(false)
       syncingMap.set(id, syncingRef)
 
       const urlRef = computed({
         get: () => tabs.value.find((t) => t.id === id)!.url,
         set: (v) => {
-          tabs.value.find((t) => t.id === id)!.url = v
+          const r = tabs.value.find((t) => t.id === id)
+          if (r) r.url = v
         },
       })
       const paramsRef = computed({
         get: () => tabs.value.find((t) => t.id === id)!.params,
         set: (v) => {
-          tabs.value.find((t) => t.id === id)!.params = v
+          const r = tabs.value.find((t) => t.id === id)
+          if (r) r.params = v
         },
       })
 
       stopHandlesMap.set(id, useUrlParamsSync(urlRef, paramsRef, syncingRef))
     }
 
-    function _initWatchers() {
-      for (const handles of stopHandlesMap.values()) {
-        handles.forEach((h) => h())
-      }
-      stopHandlesMap.clear()
-      syncingMap.clear()
-      for (const tab of tabs.value) {
-        registerWatchers(tab.id)
-      }
-    }
-
-    registerWatchers(1)
-
-    function addTab() {
-      const id = nextTabId.value++
-      tabs.value.push(createTab(id))
-      registerWatchers(id)
-      activeTabId.value = id
-    }
-
-    function renameTab(id: number, label: string) {
-      const tab = tabs.value.find((t) => t.id === id)
-      if (tab) tab.label = label
-    }
-
-    function closeTab(id: number) {
-      if (tabs.value.length <= 1) return
-
+    function unregisterWatchers(id: number) {
       stopHandlesMap.get(id)?.forEach((h) => h())
       stopHandlesMap.delete(id)
       syncingMap.delete(id)
+    }
 
-      const index = tabs.value.findIndex((t) => t.id === id)
-      tabs.value.splice(index, 1)
+    function _initWatchers() {
+      for (const handles of stopHandlesMap.values()) handles.forEach((h) => h())
+      stopHandlesMap.clear()
+      syncingMap.clear()
+      for (const id of activeWorkspace.value.openRequestIds) registerWatchers(id)
+    }
 
-      if (activeTabId.value === id) {
-        activeTabId.value = tabs.value[Math.max(0, index - 1)]!.id
+    _initWatchers()
+
+    // ── Tab / request actions ────────────────────────────────────────────────
+
+    function addTab() {
+      const ws = activeWorkspace.value
+      const id = ws.nextRequestId++
+      ws.requests.push(createRequest(id))
+      ws.openRequestIds.push(id)
+      ws.activeRequestId = id
+      registerWatchers(id)
+    }
+
+    /** Open an existing request as a tab. No-op if already open; just activates it. */
+    function openRequest(requestId: number) {
+      const ws = activeWorkspace.value
+      if (!ws.openRequestIds.includes(requestId)) {
+        ws.openRequestIds.push(requestId)
+        registerWatchers(requestId)
       }
+      ws.activeRequestId = requestId
+    }
+
+    /** Close the tab (removes from the open list). The request itself is kept. */
+    function closeTab(id: number) {
+      const ws = activeWorkspace.value
+      if (ws.openRequestIds.length <= 1) return
+
+      unregisterWatchers(id)
+
+      const index = ws.openRequestIds.indexOf(id)
+      ws.openRequestIds.splice(index, 1)
+
+      if (ws.activeRequestId === id) {
+        ws.activeRequestId = ws.openRequestIds[Math.max(0, index - 1)]!
+      }
+    }
+
+    /** Permanently delete a request from the workspace. */
+    function deleteRequest(id: number) {
+      const ws = activeWorkspace.value
+      if (ws.requests.length <= 1) return
+
+      unregisterWatchers(id)
+
+      const openIndex = ws.openRequestIds.indexOf(id)
+      if (openIndex !== -1) {
+        ws.openRequestIds.splice(openIndex, 1)
+        if (ws.activeRequestId === id) {
+          if (ws.openRequestIds.length > 0) {
+            ws.activeRequestId = ws.openRequestIds[Math.max(0, openIndex - 1)]!
+          } else {
+            const fallback = ws.requests.find((r) => r.id !== id)!
+            ws.openRequestIds.push(fallback.id)
+            ws.activeRequestId = fallback.id
+            registerWatchers(fallback.id)
+          }
+        }
+      }
+
+      const reqIndex = ws.requests.findIndex((r) => r.id === id)
+      if (reqIndex !== -1) ws.requests.splice(reqIndex, 1)
+    }
+
+    function renameTab(id: number, label: string) {
+      const request = activeWorkspace.value.requests.find((r) => r.id === id)
+      if (request) request.label = label
     }
 
     function setRequest(request: Request) {
@@ -137,29 +214,61 @@ export const useRequestStore = defineStore(
       })
     }
 
-    function $reset() {
-      for (const handles of stopHandlesMap.values()) {
-        handles.forEach((h) => h())
+    // ── Workspace actions ────────────────────────────────────────────────────
+
+    function createWorkspaceAction(name: string) {
+      const id = nextWorkspaceId.value++
+      workspaces.value.push(createWorkspace(id, name.trim() || `Workspace ${id}`))
+      switchWorkspace(id)
+    }
+
+    function switchWorkspace(id: number) {
+      for (const handles of stopHandlesMap.values()) handles.forEach((h) => h())
+      stopHandlesMap.clear()
+      syncingMap.clear()
+      activeWorkspaceId.value = id
+      _initWatchers()
+    }
+
+    function deleteWorkspace(id: number) {
+      if (workspaces.value.length <= 1) return
+      const index = workspaces.value.findIndex((w) => w.id === id)
+      if (index === -1) return
+      workspaces.value.splice(index, 1)
+      if (activeWorkspaceId.value === id) {
+        switchWorkspace(workspaces.value[Math.max(0, index - 1)]!.id)
       }
+    }
+
+    function $reset() {
+      for (const handles of stopHandlesMap.values()) handles.forEach((h) => h())
       stopHandlesMap.clear()
       syncingMap.clear()
 
-      tabs.value = [createTab(1)]
-      activeTabId.value = 1
-      nextTabId.value = 2
+      workspaces.value = [createWorkspace(1, 'My Workspace')]
+      activeWorkspaceId.value = 1
+      nextWorkspaceId.value = 2
 
-      registerWatchers(1)
+      _initWatchers()
     }
 
     return {
+      workspaces,
+      activeWorkspaceId,
+      nextWorkspaceId,
+      activeWorkspace,
       tabs,
       activeTabId,
       activeTab,
-      nextTabId,
       addTab,
+      openRequest,
       closeTab,
+      deleteRequest,
       renameTab,
       setRequest,
+      createWorkspace: createWorkspaceAction,
+      switchWorkspace,
+      deleteWorkspace,
       _initWatchers,
       $reset,
     }

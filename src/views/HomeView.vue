@@ -11,6 +11,7 @@ import { useUIStore } from '@/stores/ui.store.ts'
 import { isTauriEnv } from '@/util.ts'
 import RequestTab from '@/components/RequestTab.vue'
 import RequestTabBar from '@/components/RequestTabBar.vue'
+import WorkspaceSidebar from '@/components/WorkspaceSidebar.vue'
 import ResponsePanel from '@/components/ResponsePanel.vue'
 import { ScrollAreaCorner, ScrollAreaRoot, ScrollAreaViewport } from 'reka-ui'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
@@ -75,84 +76,105 @@ const handleCurlImport = (request: Request) => {
 </script>
 
 <template>
-  <main class="p-4 flex flex-col gap-4 h-screen">
+  <main class="flex flex-col h-screen overflow-hidden">
     <MenuBar v-if="!isTauriEnv()" />
     <ImportCurlDialog v-model:open="ui.importModalOpen" @submit="handleCurlImport" />
 
-    <div class="flex items-center gap-2">
-      <Button variant="ghost" size="sm" class="shrink-0" @click="requestStore.addTab()">
-        <Plus class="h-4 w-4" />
-      </Button>
-      <ScrollAreaRoot class="relative flex-1 min-w-0">
-        <ScrollAreaViewport class="w-full">
-          <RequestTabBar
-            v-model:activeTabId="requestStore.activeTabId"
-            :tabs="requestStore.tabs"
-            @close-tab="requestStore.closeTab"
-            @rename-tab="requestStore.renameTab"
-          />
-        </ScrollAreaViewport>
-        <ScrollBar orientation="horizontal" />
-        <ScrollAreaCorner />
-      </ScrollAreaRoot>
-      <Button
-        class="md:hidden shrink-0 h-8 w-8"
-        variant="ghost"
-        size="icon"
-        :class="{ 'bg-accent': codeToolbarOpen }"
-        title="Code snippet"
-        @click="codeToolbarOpen = !codeToolbarOpen"
-      >
-        <Code2 class="h-4 w-4" />
-      </Button>
-    </div>
-
     <div class="flex flex-1 min-h-0">
       <ResizablePanelGroup direction="horizontal" class="flex-1 min-h-0">
-        <ResizablePanel class="flex flex-col min-h-0">
-          <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
-            <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
-              <RequestTab
-                v-for="tab in requestStore.tabs"
-                v-show="tab.id === requestStore.activeTabId"
-                :key="tab.id"
-                :tab-id="tab.id"
-                @submit="handleNewRequest"
-              />
-            </ResizablePanel>
-            <ResizableHandle with-handle class="mt-3" />
-            <ResizablePanel :default-size="50" class="flex flex-col min-h-0 mt-2">
-              <ResponsePanel :response="currentResponse?.response" :body="currentResponse?.body" />
-            </ResizablePanel>
-          </ResizablePanelGroup>
+        <!-- Workspace sidebar -->
+        <ResizablePanel :default-size="18" :min-size="12" :max-size="35">
+          <WorkspaceSidebar class="h-full" />
         </ResizablePanel>
 
-        <template v-if="codeToolbarOpen && !isMobile">
-          <ResizableHandle with-handle class="mx-2" />
-          <ResizablePanel :default-size="25" :min-size="10" class="flex flex-col min-h-0">
-            <CodeExportToolbar @close="codeToolbarOpen = false" />
-          </ResizablePanel>
-        </template>
+        <ResizableHandle with-handle />
+
+        <!-- Main content -->
+        <ResizablePanel :default-size="82" class="flex flex-col min-h-0">
+          <div class="flex flex-col flex-1 min-h-0 p-4 gap-4">
+            <!-- Tab bar -->
+            <div class="flex items-center gap-2">
+              <Button variant="ghost" size="sm" class="shrink-0" @click="requestStore.addTab()">
+                <Plus class="h-4 w-4" />
+              </Button>
+              <ScrollAreaRoot class="relative flex-1 min-w-0">
+                <ScrollAreaViewport class="w-full">
+                  <RequestTabBar
+                    v-model:activeTabId="requestStore.activeTabId"
+                    :tabs="requestStore.tabs"
+                    @close-tab="requestStore.closeTab"
+                    @rename-tab="requestStore.renameTab"
+                  />
+                </ScrollAreaViewport>
+                <ScrollBar orientation="horizontal" />
+                <ScrollAreaCorner />
+              </ScrollAreaRoot>
+              <Button
+                class="md:hidden shrink-0 h-8 w-8"
+                variant="ghost"
+                size="icon"
+                :class="{ 'bg-accent': codeToolbarOpen }"
+                title="Code snippet"
+                @click="codeToolbarOpen = !codeToolbarOpen"
+              >
+                <Code2 class="h-4 w-4" />
+              </Button>
+            </div>
+
+            <!-- Request / response panels -->
+            <div class="flex flex-1 min-h-0">
+              <ResizablePanelGroup direction="horizontal" class="flex-1 min-h-0">
+                <ResizablePanel class="flex flex-col min-h-0">
+                  <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
+                    <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
+                      <RequestTab
+                        v-for="tab in requestStore.tabs"
+                        v-show="tab.id === requestStore.activeTabId"
+                        :key="`${requestStore.activeWorkspaceId}-${tab.id}`"
+                        :tab-id="tab.id"
+                        @submit="handleNewRequest"
+                      />
+                    </ResizablePanel>
+                    <ResizableHandle with-handle class="mt-3" />
+                    <ResizablePanel :default-size="50" class="flex flex-col min-h-0 mt-2">
+                      <ResponsePanel
+                        :response="currentResponse?.response"
+                        :body="currentResponse?.body"
+                      />
+                    </ResizablePanel>
+                  </ResizablePanelGroup>
+                </ResizablePanel>
+
+                <template v-if="codeToolbarOpen && !isMobile">
+                  <ResizableHandle with-handle class="mx-2" />
+                  <ResizablePanel :default-size="25" :min-size="10" class="flex flex-col min-h-0">
+                    <CodeExportToolbar @close="codeToolbarOpen = false" />
+                  </ResizablePanel>
+                </template>
+              </ResizablePanelGroup>
+
+              <Dialog v-if="isMobile" v-model:open="codeToolbarOpen">
+                <DialogContent class="flex flex-col gap-0 p-0 h-[80vh] overflow-hidden">
+                  <CodeExportToolbar :show-close-button="false" />
+                </DialogContent>
+              </Dialog>
+
+              <div class="hidden md:flex flex-col items-center border-l pl-4 shrink-0 mx-auto">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8"
+                  :class="{ 'bg-accent': codeToolbarOpen }"
+                  title="Code snippet"
+                  @click="codeToolbarOpen = !codeToolbarOpen"
+                >
+                  <Code2 class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </ResizablePanel>
       </ResizablePanelGroup>
-
-      <Dialog v-if="isMobile" v-model:open="codeToolbarOpen">
-        <DialogContent class="flex flex-col gap-0 p-0 h-[80vh] overflow-hidden">
-          <CodeExportToolbar :show-close-button="false" />
-        </DialogContent>
-      </Dialog>
-
-      <div class="hidden md:flex flex-col items-center border-l pl-4 shrink-0 mx-auto">
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8"
-          :class="{ 'bg-accent': codeToolbarOpen }"
-          title="Code snippet"
-          @click="codeToolbarOpen = !codeToolbarOpen"
-        >
-          <Code2 class="h-4 w-4" />
-        </Button>
-      </div>
     </div>
   </main>
 </template>

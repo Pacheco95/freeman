@@ -5,20 +5,24 @@ export function useWorkspace() {
   const store = useRequestStore()
 
   async function save() {
+    const ws = store.activeWorkspace
     // JSON round-trip strips Vue reactive proxies before passing to the service
-    const plainTabs = JSON.parse(JSON.stringify(store.tabs))
-    await saveWorkspace(plainTabs, store.activeTabId).catch(console.error)
+    const plainRequests = JSON.parse(JSON.stringify(ws.requests))
+    await saveWorkspace(plainRequests, ws.openRequestIds, ws.activeRequestId, ws.name).catch(
+      console.error,
+    )
   }
 
   async function load() {
     const data = await loadWorkspace()
     if (!data) return
 
-    store.$patch({
-      tabs: data.tabs,
-      activeTabId: data.activeTabId,
-      nextTabId: data.nextTabId,
-    })
+    const ws = store.activeWorkspace
+    ws.requests = data.requests
+    ws.openRequestIds = data.openRequestIds
+    ws.activeRequestId = data.activeRequestId
+    ws.nextRequestId = data.nextRequestId
+    if (data.name) ws.name = data.name
     store._initWatchers()
   }
 

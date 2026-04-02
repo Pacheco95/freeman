@@ -17,3 +17,12 @@ export type TabState = {
   params: ParamRow[]
   headers: { active: boolean; data: KeyValue }[]
 }
+
+export type Workspace = {
+  id: number
+  name: string
+  requests: TabState[]
+  openRequestIds: number[]
+  activeRequestId: number
+  nextRequestId: number
+}
