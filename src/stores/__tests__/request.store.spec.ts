@@ -13,6 +13,7 @@ describe('request store', () => {
     setActivePinia(createPinia())
     const store = useRequestStore()
     store.createWorkspace('Test Workspace')
+    store.addTab()
     await flushStoreWatchers()
   })
 
@@ -341,6 +342,7 @@ describe('request store', () => {
         store.$reset()
 
         store.createWorkspace('New')
+        store.addTab()
         await flushStoreWatchers()
 
         store.activeTab!.url = 'https://example.com?q=test'

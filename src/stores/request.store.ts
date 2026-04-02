@@ -29,10 +29,10 @@ function createWorkspace(id: number, name: string): Workspace {
   return {
     id,
     name,
-    requests: [createRequest(1)],
-    openRequestIds: [1],
-    activeRequestId: 1,
-    nextRequestId: 2,
+    requests: [],
+    openRequestIds: [],
+    activeRequestId: 0,
+    nextRequestId: 1,
   }
 }
 
