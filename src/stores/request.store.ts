@@ -62,7 +62,7 @@ export const useRequestStore = defineStore(
     })
 
     const activeTab = computed(
-      () => activeWorkspace.value.requests.find((r) => r.id === activeTabId.value)!,
+      () => activeWorkspace.value.requests.find((r) => r.id === activeTabId.value) ?? null,
     )
 
     // Watcher management — keyed by request ID, scoped to the active workspace
@@ -131,22 +131,21 @@ export const useRequestStore = defineStore(
     /** Close the tab (removes from the open list). The request itself is kept. */
     function closeTab(id: number) {
       const ws = activeWorkspace.value
-      if (ws.openRequestIds.length <= 1) return
 
       unregisterWatchers(id)
 
       const index = ws.openRequestIds.indexOf(id)
+      if (index === -1) return
       ws.openRequestIds.splice(index, 1)
 
       if (ws.activeRequestId === id) {
-        ws.activeRequestId = ws.openRequestIds[Math.max(0, index - 1)]!
+        ws.activeRequestId = ws.openRequestIds[Math.max(0, index - 1)] ?? 0
       }
     }
 
     /** Permanently delete a request from the workspace. */
     function deleteRequest(id: number) {
       const ws = activeWorkspace.value
-      if (ws.requests.length <= 1) return
 
       unregisterWatchers(id)
 
@@ -154,14 +153,7 @@ export const useRequestStore = defineStore(
       if (openIndex !== -1) {
         ws.openRequestIds.splice(openIndex, 1)
         if (ws.activeRequestId === id) {
-          if (ws.openRequestIds.length > 0) {
-            ws.activeRequestId = ws.openRequestIds[Math.max(0, openIndex - 1)]!
-          } else {
-            const fallback = ws.requests.find((r) => r.id !== id)!
-            ws.openRequestIds.push(fallback.id)
-            ws.activeRequestId = fallback.id
-            registerWatchers(fallback.id)
-          }
+          ws.activeRequestId = ws.openRequestIds[Math.max(0, openIndex - 1)] ?? 0
         }
       }
 
@@ -176,6 +168,7 @@ export const useRequestStore = defineStore(
 
     function setRequest(request: Request) {
       const tab = activeTab.value
+      if (!tab) return
       const syncing = syncingMap.get(activeTabId.value)!
       syncing.value = true
 

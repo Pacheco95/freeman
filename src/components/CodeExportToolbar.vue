@@ -32,7 +32,9 @@ const requestStore = useRequestStore()
 const selectedFormat = ref<ExportFormat>('curl')
 const copied = ref(false)
 
-const code = computed(() => generateCode(requestStore.activeTab, selectedFormat.value))
+const code = computed(() =>
+  requestStore.activeTab ? generateCode(requestStore.activeTab, selectedFormat.value) : '',
+)
 const language = computed(() => LANGUAGE_MAP[selectedFormat.value])
 
 async function copyCode() {

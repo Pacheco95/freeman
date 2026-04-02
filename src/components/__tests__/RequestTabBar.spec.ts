@@ -41,9 +41,9 @@ describe('RequestTabBar', () => {
       expect(spans.map((s) => s.text())).toEqual(['Request 1', 'My API'])
     })
 
-    it('shows close buttons only when more than one tab exists', async () => {
+    it('shows a close button for every tab', async () => {
       const wrapper = mountTabBar([makeTab(1, 'Request 1')])
-      expect(wrapper.findAll('button')).toHaveLength(0)
+      expect(wrapper.findAll('button')).toHaveLength(1)
 
       await wrapper.setProps({ tabs: [makeTab(1, 'Request 1'), makeTab(2, 'Request 2')] })
       expect(wrapper.findAll('button')).toHaveLength(2)

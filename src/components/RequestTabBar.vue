@@ -53,7 +53,6 @@ function cancelRename() {
         />
         <span v-else @dblclick.stop="startEditing(tab)">{{ tab.label }}</span>
         <button
-          v-if="tabs.length > 1"
           class="rounded-sm opacity-60 hover:opacity-100"
           @click.stop="emit('closeTab', tab.id)"
         >

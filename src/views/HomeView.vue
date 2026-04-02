@@ -35,6 +35,7 @@ const currentResponse = computed<TabResponse | undefined>(
 
 const handleNewRequest = async () => {
   const tab = requestStore.activeTab
+  if (!tab) return
   const tabId = requestStore.activeTabId
   try {
     let body: Request['body'] = undefined
@@ -93,7 +94,7 @@ const handleCurlImport = (request: Request) => {
         <ResizablePanel :default-size="82" class="flex flex-col min-h-0">
           <div class="flex flex-col flex-1 min-h-0 p-4 gap-4">
             <!-- Tab bar -->
-            <div class="flex items-center gap-2">
+            <div v-if="requestStore.tabs.length > 0" class="flex items-center gap-2">
               <Button variant="ghost" size="sm" class="shrink-0" @click="requestStore.addTab()">
                 <Plus class="h-4 w-4" />
               </Button>
@@ -123,53 +124,70 @@ const handleCurlImport = (request: Request) => {
 
             <!-- Request / response panels -->
             <div class="flex flex-1 min-h-0">
-              <ResizablePanelGroup direction="horizontal" class="flex-1 min-h-0">
-                <ResizablePanel class="flex flex-col min-h-0">
-                  <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
-                    <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
-                      <RequestTab
-                        v-for="tab in requestStore.tabs"
-                        v-show="tab.id === requestStore.activeTabId"
-                        :key="`${requestStore.activeWorkspaceId}-${tab.id}`"
-                        :tab-id="tab.id"
-                        @submit="handleNewRequest"
-                      />
-                    </ResizablePanel>
-                    <ResizableHandle with-handle class="mt-3" />
-                    <ResizablePanel :default-size="50" class="flex flex-col min-h-0 mt-2">
-                      <ResponsePanel
-                        :response="currentResponse?.response"
-                        :body="currentResponse?.body"
-                      />
-                    </ResizablePanel>
-                  </ResizablePanelGroup>
-                </ResizablePanel>
-
-                <template v-if="codeToolbarOpen && !isMobile">
-                  <ResizableHandle with-handle class="mx-2" />
-                  <ResizablePanel :default-size="25" :min-size="10" class="flex flex-col min-h-0">
-                    <CodeExportToolbar @close="codeToolbarOpen = false" />
+              <template v-if="requestStore.tabs.length > 0">
+                <ResizablePanelGroup direction="horizontal" class="flex-1 min-h-0">
+                  <ResizablePanel class="flex flex-col min-h-0">
+                    <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
+                      <ResizablePanel :default-size="50" class="flex flex-col min-h-0">
+                        <RequestTab
+                          v-for="tab in requestStore.tabs"
+                          v-show="tab.id === requestStore.activeTabId"
+                          :key="`${requestStore.activeWorkspaceId}-${tab.id}`"
+                          :tab-id="tab.id"
+                          @submit="handleNewRequest"
+                        />
+                      </ResizablePanel>
+                      <ResizableHandle with-handle class="mt-3" />
+                      <ResizablePanel :default-size="50" class="flex flex-col min-h-0 mt-2">
+                        <ResponsePanel
+                          :response="currentResponse?.response"
+                          :body="currentResponse?.body"
+                        />
+                      </ResizablePanel>
+                    </ResizablePanelGroup>
                   </ResizablePanel>
-                </template>
-              </ResizablePanelGroup>
 
-              <Dialog v-if="isMobile" v-model:open="codeToolbarOpen">
-                <DialogContent class="flex flex-col gap-0 p-0 h-[80vh] overflow-hidden">
-                  <CodeExportToolbar :show-close-button="false" />
-                </DialogContent>
-              </Dialog>
+                  <template v-if="codeToolbarOpen && !isMobile">
+                    <ResizableHandle with-handle class="mx-2" />
+                    <ResizablePanel :default-size="25" :min-size="10" class="flex flex-col min-h-0">
+                      <CodeExportToolbar @close="codeToolbarOpen = false" />
+                    </ResizablePanel>
+                  </template>
+                </ResizablePanelGroup>
 
-              <div class="hidden md:flex flex-col items-center border-l pl-4 shrink-0 mx-auto">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8"
-                  :class="{ 'bg-accent': codeToolbarOpen }"
-                  title="Code snippet"
-                  @click="codeToolbarOpen = !codeToolbarOpen"
-                >
-                  <Code2 class="h-4 w-4" />
-                </Button>
+                <Dialog v-if="isMobile" v-model:open="codeToolbarOpen">
+                  <DialogContent class="flex flex-col gap-0 p-0 h-[80vh] overflow-hidden">
+                    <CodeExportToolbar :show-close-button="false" />
+                  </DialogContent>
+                </Dialog>
+
+                <div class="hidden md:flex flex-col items-center border-l pl-4 shrink-0 mx-auto">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="h-8 w-8"
+                    :class="{ 'bg-accent': codeToolbarOpen }"
+                    title="Code snippet"
+                    @click="codeToolbarOpen = !codeToolbarOpen"
+                  >
+                    <Code2 class="h-4 w-4" />
+                  </Button>
+                </div>
+              </template>
+
+              <!-- Empty state -->
+              <div
+                v-else
+                class="flex-1 flex flex-col items-center justify-center gap-4 text-center"
+              >
+                <p class="text-muted-foreground text-sm">No requests open</p>
+                <div class="flex gap-2">
+                  <Button variant="outline" @click="requestStore.addTab()">
+                    <Plus class="h-4 w-4 mr-1" />
+                    New Request
+                  </Button>
+                  <Button variant="outline" @click="ui.openImportModal()"> Import cURL </Button>
+                </div>
               </div>
             </div>
           </div>

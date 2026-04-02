@@ -18,17 +18,17 @@ describe('request store', () => {
     const store = useRequestStore()
     await flushStoreWatchers()
 
-    expect(store.activeTab.url).toBe('')
-    expect(store.activeTab.params).toEqual([])
+    expect(store.activeTab!.url).toBe('')
+    expect(store.activeTab!.params).toEqual([])
   })
 
   it('updates params when url query changes', async () => {
     const store = useRequestStore()
 
-    store.activeTab.url = 'https://example.com/users?foo=bar&foo=baz&x=1'
+    store.activeTab!.url = 'https://example.com/users?foo=bar&foo=baz&x=1'
     await flushStoreWatchers()
 
-    expect(store.activeTab.params).toEqual([
+    expect(store.activeTab!.params).toEqual([
       { active: true, data: { key: 'foo', value: 'bar' } },
       { active: true, data: { key: 'foo', value: 'baz' } },
       { active: true, data: { key: 'x', value: '1' } },
@@ -38,10 +38,10 @@ describe('request store', () => {
   it('updates url query when params change and only includes active rows', async () => {
     const store = useRequestStore()
 
-    store.activeTab.url = 'https://example.com/api?old=1'
+    store.activeTab!.url = 'https://example.com/api?old=1'
     await flushStoreWatchers()
 
-    store.activeTab.params = [
+    store.activeTab!.params = [
       { active: true, data: { key: 'a', value: '1' } },
       { active: false, data: { key: 'ignored', value: '2' } },
       { active: true, data: { key: 'a', value: '3' } },
@@ -49,22 +49,22 @@ describe('request store', () => {
     ]
     await flushStoreWatchers()
 
-    expect(store.activeTab.url).toBe('https://example.com/api?a=1&a=3')
+    expect(store.activeTab!.url).toBe('https://example.com/api?a=1&a=3')
   })
 
   it('preserves relative path and hash when params update url', async () => {
     const store = useRequestStore()
 
-    store.activeTab.url = '/search/results?old=1#section'
+    store.activeTab!.url = '/search/results?old=1#section'
     await flushStoreWatchers()
 
-    store.activeTab.params = [
+    store.activeTab!.params = [
       { active: true, data: { key: 'q', value: 'vue' } },
       { active: false, data: { key: '', value: '' } },
     ]
     await flushStoreWatchers()
 
-    expect(store.activeTab.url).toBe('/search/results?q=vue#section')
+    expect(store.activeTab!.url).toBe('/search/results?q=vue#section')
   })
 
   describe('tab management', () => {
@@ -82,22 +82,22 @@ describe('request store', () => {
 
       expect(store.tabs).toHaveLength(2)
       expect(store.activeTabId).toBe(2)
-      expect(store.activeTab.url).toBe('')
+      expect(store.activeTab!.url).toBe('')
     })
 
     it('tabs have independent state', async () => {
       const store = useRequestStore()
 
-      store.activeTab.url = 'https://example.com'
+      store.activeTab!.url = 'https://example.com'
       await flushStoreWatchers()
 
       store.addTab()
       await flushStoreWatchers()
 
-      expect(store.activeTab.url).toBe('')
+      expect(store.activeTab!.url).toBe('')
 
       store.activeTabId = 1
-      expect(store.activeTab.url).toBe('https://example.com')
+      expect(store.activeTab!.url).toBe('https://example.com')
     })
 
     it('closeTab removes the tab and activates the previous one', async () => {
@@ -112,11 +112,11 @@ describe('request store', () => {
       expect(store.activeTabId).toBe(1)
     })
 
-    it('closeTab does nothing when only one tab exists', () => {
+    it('closeTab closes the last tab leaving no open tabs', () => {
       const store = useRequestStore()
       store.closeTab(1)
 
-      expect(store.tabs).toHaveLength(1)
+      expect(store.tabs).toHaveLength(0)
     })
 
     describe('renameTab', () => {
@@ -174,15 +174,15 @@ describe('request store', () => {
         })
         await flushStoreWatchers()
 
-        expect(store.activeTab.method).toBe('POST')
-        expect(store.activeTab.url).toBe('https://api.example.com/posts')
-        expect(store.activeTab.headers).toEqual([
+        expect(store.activeTab!.method).toBe('POST')
+        expect(store.activeTab!.url).toBe('https://api.example.com/posts')
+        expect(store.activeTab!.headers).toEqual([
           { active: true, data: { key: 'Content-Type', value: 'application/json' } },
           { active: false, data: { key: '', value: '' } },
         ])
-        expect(store.activeTab.bodyType).toBe('raw')
-        expect(store.activeTab.bodyRawSyntax).toBe('JSON')
-        expect(store.activeTab.body).toBe(JSON.stringify({ title: 'foo', userId: 1 }, null, 2))
+        expect(store.activeTab!.bodyType).toBe('raw')
+        expect(store.activeTab!.bodyRawSyntax).toBe('JSON')
+        expect(store.activeTab!.body).toBe(JSON.stringify({ title: 'foo', userId: 1 }, null, 2))
       })
 
       it('sets bodyType to none when body is absent', async () => {
@@ -191,8 +191,8 @@ describe('request store', () => {
         store.setRequest({ method: 'GET', url: 'https://api.example.com/posts' })
         await flushStoreWatchers()
 
-        expect(store.activeTab.bodyType).toBe('none')
-        expect(store.activeTab.body).toBe('')
+        expect(store.activeTab!.bodyType).toBe('none')
+        expect(store.activeTab!.body).toBe('')
       })
 
       it('populates query params from url and strips them from the url field', async () => {
@@ -209,7 +209,7 @@ describe('request store', () => {
         })
         await flushStoreWatchers()
 
-        expect(store.activeTab.params).toEqual([
+        expect(store.activeTab!.params).toEqual([
           { active: true, data: { key: 'page', value: '1' } },
           { active: true, data: { key: 'limit', value: '20' } },
         ])
@@ -229,7 +229,7 @@ describe('request store', () => {
         })
         await flushStoreWatchers()
 
-        expect(store.activeTab.headers).toEqual([
+        expect(store.activeTab!.headers).toEqual([
           { active: true, data: { key: 'Content-Type', value: 'application/json' } },
           { active: true, data: { key: 'Authorization', value: 'Bearer token123' } },
           { active: false, data: { key: '', value: '' } },
@@ -246,9 +246,9 @@ describe('request store', () => {
         })
         await flushStoreWatchers()
 
-        expect(store.activeTab.bodyType).toBe('raw')
-        expect(store.activeTab.bodyRawSyntax).toBe('JSON')
-        expect(store.activeTab.body).toBe('{"raw":true}')
+        expect(store.activeTab!.bodyType).toBe('raw')
+        expect(store.activeTab!.bodyRawSyntax).toBe('JSON')
+        expect(store.activeTab!.body).toBe('{"raw":true}')
       })
 
       it('overwrites previous body state when importing into an existing tab', async () => {
@@ -264,8 +264,8 @@ describe('request store', () => {
         store.setRequest({ method: 'GET', url: 'https://api.example.com/second' })
         await flushStoreWatchers()
 
-        expect(store.activeTab.bodyType).toBe('none')
-        expect(store.activeTab.body).toBe('')
+        expect(store.activeTab!.bodyType).toBe('none')
+        expect(store.activeTab!.body).toBe('')
       })
     })
 
@@ -277,12 +277,12 @@ describe('request store', () => {
       store.setRequest({ method: 'POST', url: 'https://api.example.com', body: '{}' })
       await flushStoreWatchers()
 
-      expect(store.activeTab.method).toBe('POST')
-      expect(store.activeTab.url).toBe('https://api.example.com')
+      expect(store.activeTab!.method).toBe('POST')
+      expect(store.activeTab!.url).toBe('https://api.example.com')
 
       store.activeTabId = 1
-      expect(store.activeTab.method).toBe('GET')
-      expect(store.activeTab.url).toBe('')
+      expect(store.activeTab!.method).toBe('GET')
+      expect(store.activeTab!.url).toBe('')
     })
 
     describe('$reset', () => {
@@ -323,24 +323,24 @@ describe('request store', () => {
 
       it('resets the initial tab to default values', async () => {
         const store = useRequestStore()
-        store.activeTab.url = 'https://example.com'
-        store.activeTab.method = 'POST'
-        store.activeTab.body = '{"key":"value"}'
-        store.activeTab.label = 'My Request'
+        store.activeTab!.url = 'https://example.com'
+        store.activeTab!.method = 'POST'
+        store.activeTab!.body = '{"key":"value"}'
+        store.activeTab!.label = 'My Request'
         await flushStoreWatchers()
 
         store.$reset()
 
-        expect(store.activeTab.url).toBe('')
-        expect(store.activeTab.method).toBe('GET')
-        expect(store.activeTab.body).toBe('')
-        expect(store.activeTab.label).toBe('Request 1')
+        expect(store.activeTab!.url).toBe('')
+        expect(store.activeTab!.method).toBe('GET')
+        expect(store.activeTab!.body).toBe('')
+        expect(store.activeTab!.label).toBe('Request 1')
       })
 
       it('returns to the same state as a freshly initialised store', async () => {
         const store = useRequestStore()
         store.addTab()
-        store.activeTab.url = 'https://example.com'
+        store.activeTab!.url = 'https://example.com'
         store.setRequest({ method: 'DELETE', url: 'https://api.example.com' })
         await flushStoreWatchers()
 
@@ -350,8 +350,8 @@ describe('request store', () => {
         const fresh = useRequestStore()
         expect(store.tabs).toHaveLength(fresh.tabs.length)
         expect(store.activeTabId).toBe(fresh.activeTabId)
-        expect(store.activeTab.url).toBe(fresh.activeTab.url)
-        expect(store.activeTab.method).toBe(fresh.activeTab.method)
+        expect(store.activeTab!.url).toBe(fresh.activeTab!.url)
+        expect(store.activeTab!.method).toBe(fresh.activeTab!.method)
       })
 
       it('re-registers URL-params sync on the reset tab', async () => {
@@ -360,10 +360,10 @@ describe('request store', () => {
         await flushStoreWatchers()
 
         store.$reset()
-        store.activeTab.url = 'https://example.com?q=test'
+        store.activeTab!.url = 'https://example.com?q=test'
         await flushStoreWatchers()
 
-        expect(store.activeTab.params).toEqual([
+        expect(store.activeTab!.params).toEqual([
           { active: true, data: { key: 'q', value: 'test' } },
         ])
       })
@@ -374,10 +374,10 @@ describe('request store', () => {
       store.addTab()
       await flushStoreWatchers()
 
-      store.activeTab.url = 'https://example.com?q=test'
+      store.activeTab!.url = 'https://example.com?q=test'
       await flushStoreWatchers()
 
-      expect(store.activeTab.params).toEqual([{ active: true, data: { key: 'q', value: 'test' } }])
+      expect(store.activeTab!.params).toEqual([{ active: true, data: { key: 'q', value: 'test' } }])
     })
   })
 })
