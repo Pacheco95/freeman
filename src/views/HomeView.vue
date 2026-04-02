@@ -156,6 +156,7 @@ function confirmImportWithWorkspace() {
                     v-model:activeTabId="requestStore.activeTabId"
                     :tabs="requestStore.tabs"
                     @close-tab="requestStore.closeTab"
+                    @close-all-tabs="requestStore.closeAllTabs"
                     @rename-tab="requestStore.renameTab"
                   />
                 </ScrollAreaViewport>

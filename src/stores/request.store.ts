@@ -179,6 +179,14 @@ export const useRequestStore = defineStore(
       if (reqIndex !== -1) ws.requests.splice(reqIndex, 1)
     }
 
+    function closeAllTabs() {
+      const ws = activeWorkspace.value
+      if (!ws) return
+      for (const id of [...ws.openRequestIds]) unregisterWatchers(id)
+      ws.openRequestIds = []
+      ws.activeRequestId = 0
+    }
+
     function renameTab(id: number, label: string) {
       const request = activeWorkspace.value?.requests.find((r) => r.id === id)
       if (request) request.label = label
@@ -273,6 +281,7 @@ export const useRequestStore = defineStore(
       addTab,
       openRequest,
       closeTab,
+      closeAllTabs,
       deleteRequest,
       renameTab,
       setRequest,
