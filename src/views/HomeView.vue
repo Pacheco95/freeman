@@ -16,7 +16,14 @@ import ResponsePanel from '@/components/ResponsePanel.vue'
 import { ScrollAreaCorner, ScrollAreaRoot, ScrollAreaViewport } from 'reka-ui'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { ScrollBar } from '@/components/ui/scroll-area'
 import CodeExportToolbar from '@/components/CodeExportToolbar.vue'
 
@@ -69,10 +76,26 @@ const handleNewRequest = async () => {
   }
 }
 
+const pendingImport = ref<Request | null>(null)
+const workspaceNameForImport = ref('')
+
 const handleCurlImport = (request: Request) => {
-  requestStore.addTab()
   ui.closeImportModal()
+  if (requestStore.workspaces.length === 0) {
+    pendingImport.value = request
+    workspaceNameForImport.value = ''
+    return
+  }
+  requestStore.addTab()
   requestStore.setRequest(request)
+}
+
+function confirmImportWithWorkspace() {
+  if (!workspaceNameForImport.value.trim() || !pendingImport.value) return
+  requestStore.createWorkspace(workspaceNameForImport.value)
+  requestStore.addTab()
+  requestStore.setRequest(pendingImport.value)
+  pendingImport.value = null
 }
 </script>
 
@@ -80,6 +103,35 @@ const handleCurlImport = (request: Request) => {
   <main class="flex flex-col h-screen overflow-hidden">
     <MenuBar v-if="!isTauriEnv()" />
     <ImportCurlDialog v-model:open="ui.importModalOpen" @submit="handleCurlImport" />
+
+    <!-- Workspace name prompt shown when importing cURL with no workspace -->
+    <Dialog
+      :open="pendingImport !== null"
+      @update:open="
+        (v) => {
+          if (!v) pendingImport = null
+        }
+      "
+    >
+      <DialogContent class="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Name your workspace</DialogTitle>
+        </DialogHeader>
+        <Input
+          v-model="workspaceNameForImport"
+          placeholder="Workspace name"
+          autofocus
+          @keydown.enter="confirmImportWithWorkspace"
+          @keydown.esc="pendingImport = null"
+        />
+        <DialogFooter>
+          <Button variant="outline" @click="pendingImport = null">Cancel</Button>
+          <Button :disabled="!workspaceNameForImport.trim()" @click="confirmImportWithWorkspace">
+            Create & Import
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <div class="flex flex-1 min-h-0">
       <ResizablePanelGroup direction="horizontal" class="flex-1 min-h-0">

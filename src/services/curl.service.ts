@@ -14,18 +14,20 @@ export const parseCurl = (curl: string): Request => {
   const headers = parsed.data?.headers.map((header) => ({ key: header.name, value: header.value }))
 
   const body = (() => {
-    if (!['json', 'raw'].includes(parsed.data?.body?.type ?? '')) {
+    if (!parsed.data?.body) return undefined
+
+    if (!['json', 'raw'].includes(parsed.data.body.type ?? '')) {
       throw new Error('Not implemented')
     }
 
-    const content = parsed.data?.body?.content
+    const content = parsed.data.body.content
 
     if (typeof content !== 'string') {
       throw new Error('Not implemented')
     }
 
-    const startCharacter = content?.startsWith('$') ? 1 : 0
-    const json = content?.slice(startCharacter)
+    const startCharacter = content.startsWith('$') ? 1 : 0
+    const json = content.slice(startCharacter)
     return JSON.parse(json)
   })()
 

@@ -12,7 +12,7 @@ import {
 function createRequest(id: number): TabState {
   return {
     id,
-    label: `Request ${id}`,
+    label: 'Untitled request',
     panelTab: 'params',
     method: 'GET' as Method,
     url: '',
@@ -33,6 +33,17 @@ function createWorkspace(id: number, name: string): Workspace {
     openRequestIds: [],
     activeRequestId: 0,
     nextRequestId: 1,
+  }
+}
+
+function labelFromUrl(url: string): string {
+  if (!url) return 'Untitled request'
+  try {
+    const u = new URL(url)
+    return u.origin + u.pathname
+  } catch {
+    // relative URL — strip query string and fragment
+    return url.split('?')[0]!.split('#')[0]!
   }
 }
 
@@ -198,6 +209,7 @@ export const useRequestStore = defineStore(
         : []
 
       tab.url = request.url ?? ''
+      tab.label = labelFromUrl(tab.url)
 
       if (request.params?.length) {
         tab.params = [

@@ -143,7 +143,7 @@ describe('request store', () => {
         store.renameTab(1, 'Renamed')
 
         expect(store.tabs[0]!.label).toBe('Renamed')
-        expect(store.tabs[1]!.label).toBe('Request 2')
+        expect(store.tabs[1]!.label).toBe('Untitled request')
       })
 
       it('allows duplicate names across tabs', async () => {
@@ -161,7 +161,7 @@ describe('request store', () => {
       it('is a no-op for a non-existent tab id', () => {
         const store = useRequestStore()
         store.renameTab(999, 'Ghost')
-        expect(store.tabs[0]!.label).toBe('Request 1')
+        expect(store.tabs[0]!.label).toBe('Untitled request')
       })
     })
 
