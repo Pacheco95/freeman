@@ -26,7 +26,7 @@ describe('ObjTable', () => {
   const getRows = (wrapper: ReturnType<typeof mount>) =>
     (wrapper.vm as unknown as { rows: Row[] }).rows
 
-  it('renders table with columns and initial empty row', async () => {
+  it('renders table with columns and placeholder row', async () => {
     const wrapper = mount(ObjTable<TestData>, {
       props: { columns },
       global: {
@@ -36,12 +36,12 @@ describe('ObjTable', () => {
     })
     await nextTick()
 
-    expect(wrapper.findAll('tr')).toHaveLength(2) // header + 1 row
+    expect(wrapper.findAll('tr')).toHaveLength(2) // header + placeholder row
     expect(wrapper.text()).toContain('Name')
     expect(wrapper.text()).toContain('Value')
   })
 
-  it('adds empty row when last row has data', async () => {
+  it('does not add empty row to model — placeholder is separate from model', async () => {
     const rows: Row[] = [{ data: { name: 'test', value: '123' }, active: false }]
     const wrapper = mount(ObjTable<TestData>, {
       props: { columns },
@@ -53,17 +53,13 @@ describe('ObjTable', () => {
     await wrapper.setProps({ rows })
     await nextTick()
 
-    const tableRows = getRows(wrapper)
-    expect(tableRows).toHaveLength(2)
-    expect(tableRows[1]!.data.name).toBe('')
-    expect(tableRows[1]!.data.value).toBe('')
+    expect(getRows(wrapper)).toHaveLength(1)
   })
 
   it('removes row when delete button is clicked', async () => {
     const rows: Row[] = [
       { data: { name: 'test1', value: '123' }, active: false },
       { data: { name: 'test2', value: '456' }, active: false },
-      { data: { name: '', value: '' }, active: false },
     ]
     const wrapper = mount(ObjTable<TestData>, {
       props: { columns },
@@ -76,13 +72,13 @@ describe('ObjTable', () => {
     await nextTick()
 
     const deleteButtons = wrapper.findAllComponents({ name: 'Button' })
-    expect(deleteButtons).toHaveLength(2) // two non-empty rows
+    expect(deleteButtons).toHaveLength(2)
 
     await deleteButtons[0]!.trigger('click')
     await nextTick()
 
     const tableRows = getRows(wrapper)
-    expect(tableRows).toHaveLength(2) // one removed, but empty row remains
+    expect(tableRows).toHaveLength(1)
     expect(tableRows[0]!.data.name).toBe('test2')
   })
 
@@ -106,7 +102,7 @@ describe('ObjTable', () => {
   })
 
   it('updates data via input', async () => {
-    const rows: Row[] = [{ data: { name: '', value: '' }, active: false }]
+    const rows: Row[] = [{ data: { name: 'existing', value: 'val' }, active: true }]
     const wrapper = mount(ObjTable<TestData>, {
       props: { columns },
       global: {
@@ -118,7 +114,7 @@ describe('ObjTable', () => {
     await nextTick()
 
     const inputs = wrapper.findAllComponents({ name: 'Input' })
-    expect(inputs).toHaveLength(2) // name and value
+    expect(inputs).toHaveLength(4) // 2 for the real row + 2 for the placeholder row
 
     await inputs[0]!.setValue('new name')
     await nextTick()
@@ -130,7 +126,6 @@ describe('ObjTable', () => {
     const rows: Row[] = [
       { data: { name: 'first', value: '1' }, active: false },
       { data: { name: 'second', value: '2' }, active: false },
-      { data: { name: '', value: '' }, active: false },
     ]
     const wrapper = mount(ObjTable<TestData>, {
       props: { columns, rows },
@@ -153,14 +148,12 @@ describe('ObjTable', () => {
     const tableRows = getRows(wrapper)
     expect(tableRows[0]!.data.name).toBe('second')
     expect(tableRows[1]!.data.name).toBe('first')
-    expect(tableRows[2]!.data.name).toBe('')
   })
 
-  it('does not allow dragging the last placeholder row', async () => {
+  it('placeholder row has no drag handle', async () => {
     const rows: Row[] = [
       { data: { name: 'first', value: '1' }, active: false },
       { data: { name: 'second', value: '2' }, active: false },
-      { data: { name: '', value: '' }, active: false },
     ]
     const wrapper = mount(ObjTable<TestData>, {
       props: { columns, rows },
@@ -172,17 +165,6 @@ describe('ObjTable', () => {
     await nextTick()
 
     const dragHandles = wrapper.findAll('span[draggable="true"]')
-    const bodyRows = wrapper.findAll('tbody tr')
-    const dataTransfer = { effectAllowed: '' }
-
-    await dragHandles[2]!.trigger('dragstart', { dataTransfer })
-    await bodyRows[0]!.trigger('drop')
-    await nextTick()
-
-    expect(dataTransfer.effectAllowed).toBe('')
-    const tableRows = getRows(wrapper)
-    expect(tableRows[0]!.data.name).toBe('first')
-    expect(tableRows[1]!.data.name).toBe('second')
-    expect(tableRows[2]!.data.name).toBe('')
+    expect(dragHandles).toHaveLength(2) // only the two real rows have drag handles
   })
 })
