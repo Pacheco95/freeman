@@ -11,6 +11,8 @@ const flushStoreWatchers = async () => {
 describe('request store', () => {
   beforeEach(async () => {
     setActivePinia(createPinia())
+    const store = useRequestStore()
+    store.createWorkspace('Test Workspace')
     await flushStoreWatchers()
   })
 
@@ -212,6 +214,7 @@ describe('request store', () => {
         expect(store.activeTab!.params).toEqual([
           { active: true, data: { key: 'page', value: '1' } },
           { active: true, data: { key: 'limit', value: '20' } },
+          { active: false, data: { key: '', value: '' } },
         ])
       })
 
@@ -286,7 +289,7 @@ describe('request store', () => {
     })
 
     describe('$reset', () => {
-      it('resets to a single tab with id 1', async () => {
+      it('resets to no workspaces', async () => {
         const store = useRequestStore()
         store.addTab()
         store.addTab()
@@ -294,47 +297,26 @@ describe('request store', () => {
 
         store.$reset()
 
-        expect(store.tabs).toHaveLength(1)
-        expect(store.tabs[0]!.id).toBe(1)
+        expect(store.workspaces).toHaveLength(0)
+        expect(store.tabs).toHaveLength(0)
       })
 
-      it('resets activeTabId to 1', async () => {
+      it('resets activeWorkspaceId to 0 and activeTab to null', async () => {
         const store = useRequestStore()
-        store.addTab()
-        await flushStoreWatchers()
-
         store.$reset()
 
-        expect(store.activeTabId).toBe(1)
+        expect(store.activeWorkspaceId).toBe(0)
+        expect(store.activeTab).toBeNull()
       })
 
-      it('resets nextTabId so the next new tab gets id 2', async () => {
+      it('resets nextWorkspaceId so the first new workspace gets id 1', async () => {
         const store = useRequestStore()
-        store.addTab()
-        store.addTab()
-        await flushStoreWatchers()
-
-        store.$reset()
-        store.addTab()
-        await flushStoreWatchers()
-
-        expect(store.tabs[1]!.id).toBe(2)
-      })
-
-      it('resets the initial tab to default values', async () => {
-        const store = useRequestStore()
-        store.activeTab!.url = 'https://example.com'
-        store.activeTab!.method = 'POST'
-        store.activeTab!.body = '{"key":"value"}'
-        store.activeTab!.label = 'My Request'
-        await flushStoreWatchers()
-
         store.$reset()
 
-        expect(store.activeTab!.url).toBe('')
-        expect(store.activeTab!.method).toBe('GET')
-        expect(store.activeTab!.body).toBe('')
-        expect(store.activeTab!.label).toBe('Request 1')
+        store.createWorkspace('Fresh')
+        await flushStoreWatchers()
+
+        expect(store.workspaces[0]!.id).toBe(1)
       })
 
       it('returns to the same state as a freshly initialised store', async () => {
@@ -347,19 +329,20 @@ describe('request store', () => {
         store.$reset()
         await flushStoreWatchers()
 
+        setActivePinia(createPinia())
         const fresh = useRequestStore()
-        expect(store.tabs).toHaveLength(fresh.tabs.length)
-        expect(store.activeTabId).toBe(fresh.activeTabId)
-        expect(store.activeTab!.url).toBe(fresh.activeTab!.url)
-        expect(store.activeTab!.method).toBe(fresh.activeTab!.method)
+        expect(store.workspaces).toHaveLength(fresh.workspaces.length)
+        expect(store.activeWorkspaceId).toBe(fresh.activeWorkspaceId)
+        expect(store.activeTab).toBe(fresh.activeTab)
       })
 
-      it('re-registers URL-params sync on the reset tab', async () => {
+      it('re-registers URL-params sync after reset and workspace creation', async () => {
         const store = useRequestStore()
-        store.addTab()
+        store.$reset()
+
+        store.createWorkspace('New')
         await flushStoreWatchers()
 
-        store.$reset()
         store.activeTab!.url = 'https://example.com?q=test'
         await flushStoreWatchers()
 

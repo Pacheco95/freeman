@@ -39,30 +39,30 @@ function createWorkspace(id: number, name: string): Workspace {
 export const useRequestStore = defineStore(
   'request',
   () => {
-    const workspaces = ref<Workspace[]>([createWorkspace(1, 'My Workspace')])
-    const activeWorkspaceId = ref<number>(1)
-    const nextWorkspaceId = ref<number>(2)
+    const workspaces = ref<Workspace[]>([])
+    const activeWorkspaceId = ref<number>(0)
+    const nextWorkspaceId = ref<number>(1)
 
     const activeWorkspace = computed(
-      () => workspaces.value.find((w) => w.id === activeWorkspaceId.value)!,
+      () => workspaces.value.find((w) => w.id === activeWorkspaceId.value) ?? null,
     )
 
     // tabs = requests that are currently open as tabs (backward-compatible)
-    const tabs = computed(() =>
-      activeWorkspace.value.requests.filter((r) =>
-        activeWorkspace.value.openRequestIds.includes(r.id),
-      ),
-    )
+    const tabs = computed(() => {
+      const ws = activeWorkspace.value
+      if (!ws) return []
+      return ws.requests.filter((r) => ws.openRequestIds.includes(r.id))
+    })
 
     const activeTabId = computed({
-      get: () => activeWorkspace.value.activeRequestId,
+      get: () => activeWorkspace.value?.activeRequestId ?? 0,
       set: (v: number) => {
-        activeWorkspace.value.activeRequestId = v
+        if (activeWorkspace.value) activeWorkspace.value.activeRequestId = v
       },
     })
 
     const activeTab = computed(
-      () => activeWorkspace.value.requests.find((r) => r.id === activeTabId.value) ?? null,
+      () => activeWorkspace.value?.requests.find((r) => r.id === activeTabId.value) ?? null,
     )
 
     // Watcher management — keyed by request ID, scoped to the active workspace
@@ -102,7 +102,10 @@ export const useRequestStore = defineStore(
       for (const handles of stopHandlesMap.values()) handles.forEach((h) => h())
       stopHandlesMap.clear()
       syncingMap.clear()
-      for (const id of activeWorkspace.value.openRequestIds) registerWatchers(id)
+      const ws = activeWorkspace.value
+      if (ws) {
+        for (const id of ws.openRequestIds) registerWatchers(id)
+      }
     }
 
     _initWatchers()
@@ -111,6 +114,7 @@ export const useRequestStore = defineStore(
 
     function addTab() {
       const ws = activeWorkspace.value
+      if (!ws) return
       const id = ws.nextRequestId++
       ws.requests.push(createRequest(id))
       ws.openRequestIds.push(id)
@@ -121,6 +125,7 @@ export const useRequestStore = defineStore(
     /** Open an existing request as a tab. No-op if already open; just activates it. */
     function openRequest(requestId: number) {
       const ws = activeWorkspace.value
+      if (!ws) return
       if (!ws.openRequestIds.includes(requestId)) {
         ws.openRequestIds.push(requestId)
         registerWatchers(requestId)
@@ -131,6 +136,7 @@ export const useRequestStore = defineStore(
     /** Close the tab (removes from the open list). The request itself is kept. */
     function closeTab(id: number) {
       const ws = activeWorkspace.value
+      if (!ws) return
 
       unregisterWatchers(id)
 
@@ -146,6 +152,7 @@ export const useRequestStore = defineStore(
     /** Permanently delete a request from the workspace. */
     function deleteRequest(id: number) {
       const ws = activeWorkspace.value
+      if (!ws) return
 
       unregisterWatchers(id)
 
@@ -162,7 +169,7 @@ export const useRequestStore = defineStore(
     }
 
     function renameTab(id: number, label: string) {
-      const request = activeWorkspace.value.requests.find((r) => r.id === id)
+      const request = activeWorkspace.value?.requests.find((r) => r.id === id)
       if (request) request.label = label
     }
 
@@ -238,11 +245,9 @@ export const useRequestStore = defineStore(
       stopHandlesMap.clear()
       syncingMap.clear()
 
-      workspaces.value = [createWorkspace(1, 'My Workspace')]
-      activeWorkspaceId.value = 1
-      nextWorkspaceId.value = 2
-
-      _initWatchers()
+      workspaces.value = []
+      activeWorkspaceId.value = 0
+      nextWorkspaceId.value = 1
     }
 
     return {

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { useRequestStore } from '@/stores/request.store.ts'
+import { useUIStore } from '@/stores/ui.store.ts'
 import type { TabState } from '@/types/misc.ts'
 import {
   ContextMenu,
@@ -29,35 +30,64 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const store = useRequestStore()
+const ui = useUIStore()
 
 // ── Workspace creation ───────────────────────────────────────────────────────
-const showCreateWorkspace = ref(false)
 const newWorkspaceName = ref('')
 
-function openCreateWorkspace() {
-  newWorkspaceName.value = ''
-  showCreateWorkspace.value = true
-}
+watch(
+  () => ui.createWorkspaceModalOpen,
+  (open) => {
+    if (open) newWorkspaceName.value = ''
+  },
+)
 
 function createWorkspace() {
   if (!newWorkspaceName.value.trim()) return
   store.createWorkspace(newWorkspaceName.value)
-  showCreateWorkspace.value = false
+  ui.closeCreateWorkspaceModal()
+}
+
+// ── Multi-select ─────────────────────────────────────────────────────────────
+const selectedIds = ref<Set<number>>(new Set())
+watch(
+  () => store.activeWorkspaceId,
+  () => {
+    selectedIds.value = new Set()
+  },
+)
+
+function handleRequestClick(request: TabState, event: MouseEvent) {
+  if (event.ctrlKey || event.metaKey) {
+    const next = new Set(selectedIds.value)
+    if (next.has(request.id)) {
+      next.delete(request.id)
+    } else {
+      next.add(request.id)
+    }
+    selectedIds.value = next
+  } else {
+    selectedIds.value = new Set()
+    store.openRequest(request.id)
+  }
 }
 
 // ── Request deletion ─────────────────────────────────────────────────────────
 const showDeleteConfirm = ref(false)
-const requestToDelete = ref<TabState | null>(null)
+const requestsToDelete = ref<TabState[]>([])
 
 function promptDelete(request: TabState) {
-  requestToDelete.value = request
+  requestsToDelete.value = selectedIds.value.has(request.id)
+    ? (store.activeWorkspace?.requests.filter((r) => selectedIds.value.has(r.id)) ?? [])
+    : [request]
   showDeleteConfirm.value = true
 }
 
 function confirmDelete() {
-  if (requestToDelete.value) store.deleteRequest(requestToDelete.value.id)
+  for (const r of requestsToDelete.value) store.deleteRequest(r.id)
+  selectedIds.value = new Set()
   showDeleteConfirm.value = false
-  requestToDelete.value = null
+  requestsToDelete.value = []
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -85,7 +115,7 @@ function methodColor(method: string) {
         @update:model-value="store.switchWorkspace(Number($event))"
       >
         <SelectTrigger class="flex-1 h-8 text-sm">
-          <SelectValue />
+          <SelectValue placeholder="No workspace" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem v-for="ws in store.workspaces" :key="ws.id" :value="String(ws.id)">
@@ -98,66 +128,71 @@ function methodColor(method: string) {
         size="icon"
         class="h-8 w-8 shrink-0"
         title="New workspace"
-        @click="openCreateWorkspace"
+        @click="ui.openCreateWorkspaceModal()"
       >
         <Plus class="h-4 w-4" />
       </Button>
     </div>
 
-    <!-- Requests header -->
-    <div class="flex items-center justify-between px-3 py-2">
-      <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-        >Requests</span
-      >
-      <Button
-        variant="ghost"
-        size="icon"
-        class="h-6 w-6"
-        title="New request"
-        @click="store.addTab()"
-      >
-        <Plus class="h-3 w-3" />
-      </Button>
-    </div>
+    <!-- Requests header (only when a workspace is active) -->
+    <template v-if="store.activeWorkspace">
+      <div class="flex items-center justify-between px-3 py-2">
+        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >Requests</span
+        >
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-6 w-6"
+          title="New request"
+          @click="store.addTab()"
+        >
+          <Plus class="h-3 w-3" />
+        </Button>
+      </div>
 
-    <!-- Request tree -->
-    <div class="flex-1 overflow-y-auto px-1 pb-2">
-      <ContextMenu v-for="request in store.activeWorkspace.requests" :key="request.id">
-        <ContextMenuTrigger as-child>
-          <button
-            class="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm hover:bg-accent transition-colors"
-            :class="{ 'bg-accent': store.activeTabId === request.id }"
-            @click="store.openRequest(request.id)"
-          >
-            <span
-              class="font-mono text-xs font-bold w-16 shrink-0 text-left truncate"
-              :class="methodColor(request.method)"
-              >{{ request.method }}</span
+      <!-- Request tree -->
+      <div class="flex-1 overflow-y-auto px-1 pb-2">
+        <ContextMenu v-for="request in store.activeWorkspace.requests" :key="request.id">
+          <ContextMenuTrigger as-child>
+            <button
+              class="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm hover:bg-accent transition-colors"
+              :class="{
+                'bg-accent': store.activeTabId === request.id,
+                'ring-1 ring-primary bg-primary/10': selectedIds.has(request.id),
+              }"
+              @click="handleRequestClick(request, $event)"
             >
-            <span class="truncate flex-1 text-left">{{ request.label }}</span>
-            <!-- dot indicator: request is open as a tab -->
-            <span
-              v-if="store.activeWorkspace.openRequestIds.includes(request.id)"
-              class="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
-            />
-          </button>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem @click="store.openRequest(request.id)">Open</ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuItem
-            class="text-destructive focus:text-destructive"
-            @click="promptDelete(request)"
-          >
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
-    </div>
+              <span
+                class="font-mono text-xs font-bold w-16 shrink-0 text-left truncate"
+                :class="methodColor(request.method)"
+                >{{ request.method }}</span
+              >
+              <span class="truncate flex-1 text-left">{{ request.label }}</span>
+              <!-- dot indicator: request is open as a tab -->
+              <span
+                v-if="store.activeWorkspace.openRequestIds.includes(request.id)"
+                class="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
+              />
+            </button>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem @click="store.openRequest(request.id)">Open</ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              class="text-destructive focus:text-destructive"
+              @click="promptDelete(request)"
+            >
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      </div>
+    </template>
   </div>
 
   <!-- Create workspace dialog -->
-  <Dialog v-model:open="showCreateWorkspace">
+  <Dialog v-model:open="ui.createWorkspaceModalOpen">
     <DialogContent class="sm:max-w-sm">
       <DialogHeader>
         <DialogTitle>New Workspace</DialogTitle>
@@ -167,10 +202,10 @@ function methodColor(method: string) {
         placeholder="Workspace name"
         autofocus
         @keydown.enter="createWorkspace"
-        @keydown.esc="showCreateWorkspace = false"
+        @keydown.esc="ui.closeCreateWorkspaceModal()"
       />
       <DialogFooter>
-        <Button variant="outline" @click="showCreateWorkspace = false">Cancel</Button>
+        <Button variant="outline" @click="ui.closeCreateWorkspaceModal()">Cancel</Button>
         <Button :disabled="!newWorkspaceName.trim()" @click="createWorkspace">Create</Button>
       </DialogFooter>
     </DialogContent>
@@ -180,9 +215,20 @@ function methodColor(method: string) {
   <Dialog v-model:open="showDeleteConfirm">
     <DialogContent class="sm:max-w-sm">
       <DialogHeader>
-        <DialogTitle>Delete request?</DialogTitle>
+        <DialogTitle
+          >Delete
+          {{
+            requestsToDelete.length === 1 ? 'request' : `${requestsToDelete.length} requests`
+          }}?</DialogTitle
+        >
         <DialogDescription>
-          "{{ requestToDelete?.label }}" will be permanently deleted. This cannot be undone.
+          <template v-if="requestsToDelete.length === 1">
+            "{{ requestsToDelete[0]?.label }}" will be permanently deleted. This cannot be undone.
+          </template>
+          <template v-else>
+            {{ requestsToDelete.length }} requests will be permanently deleted. This cannot be
+            undone.
+          </template>
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>

@@ -175,7 +175,19 @@ const handleCurlImport = (request: Request) => {
                 </div>
               </template>
 
-              <!-- Empty state -->
+              <!-- Empty state: no workspace -->
+              <div
+                v-else-if="requestStore.workspaces.length === 0"
+                class="flex-1 flex flex-col items-center justify-center gap-4 text-center"
+              >
+                <p class="text-muted-foreground text-sm">Create a workspace to get started</p>
+                <Button variant="outline" @click="ui.openCreateWorkspaceModal()">
+                  <Plus class="h-4 w-4 mr-1" />
+                  New Workspace
+                </Button>
+              </div>
+
+              <!-- Empty state: no open requests -->
               <div
                 v-else
                 class="flex-1 flex flex-col items-center justify-center gap-4 text-center"
@@ -186,7 +198,7 @@ const handleCurlImport = (request: Request) => {
                     <Plus class="h-4 w-4 mr-1" />
                     New Request
                   </Button>
-                  <Button variant="outline" @click="ui.openImportModal()"> Import cURL </Button>
+                  <Button variant="outline" @click="ui.openImportModal()">Import cURL</Button>
                 </div>
               </div>
             </div>
