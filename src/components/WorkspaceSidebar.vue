@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { useRequestStore } from '@/stores/request.store.ts'
 import { useUIStore } from '@/stores/ui.store.ts'
@@ -86,6 +86,29 @@ function handleRequestClick(request: TabState, event: MouseEvent) {
     anchorId.value = request.id
     store.openRequest(request.id)
   }
+}
+
+// ── Request rename ───────────────────────────────────────────────────────────
+const editingRequestId = ref<number | null>(null)
+const editingLabel = ref('')
+
+async function startEditing(request: TabState) {
+  editingRequestId.value = request.id
+  editingLabel.value = request.label
+  await nextTick()
+  const input = document.getElementById(`request-rename-${request.id}`) as HTMLInputElement | null
+  input?.select()
+}
+
+function commitRename() {
+  if (editingRequestId.value === null) return
+  const trimmed = editingLabel.value.trim()
+  if (trimmed) store.renameTab(editingRequestId.value, trimmed)
+  editingRequestId.value = null
+}
+
+function cancelRename() {
+  editingRequestId.value = null
 }
 
 // ── Workspace deletion ───────────────────────────────────────────────────────
@@ -202,7 +225,23 @@ function methodColor(method: string) {
                 :class="methodColor(request.method)"
                 >{{ request.method }}</span
               >
-              <span class="truncate flex-1 text-left">{{ request.label }}</span>
+              <input
+                v-if="editingRequestId === request.id"
+                :id="`request-rename-${request.id}`"
+                v-model="editingLabel"
+                class="bg-transparent outline-none flex-1 min-w-0 text-sm"
+                @blur="commitRename"
+                @keydown.enter.prevent="commitRename"
+                @keydown.esc.prevent="cancelRename"
+                @click.stop
+                @dblclick.stop
+              />
+              <span
+                v-else
+                class="truncate flex-1 text-left"
+                @dblclick.stop="startEditing(request)"
+                >{{ request.label }}</span
+              >
               <!-- dot indicator: request is open as a tab -->
               <span
                 v-if="store.activeWorkspace.openRequestIds.includes(request.id)"
@@ -210,11 +249,22 @@ function methodColor(method: string) {
               />
             </button>
           </ContextMenuTrigger>
-          <ContextMenuContent>
+          <ContextMenuContent
+            @close-auto-focus="
+              (e: Event) => {
+                if (editingRequestId !== null) e.preventDefault()
+              }
+            "
+          >
             <ContextMenuItem
               v-if="!selectedIds.has(request.id) || selectedIds.size === 1"
               @click="store.openRequest(request.id)"
               >Open</ContextMenuItem
+            >
+            <ContextMenuItem
+              v-if="!selectedIds.has(request.id) || selectedIds.size === 1"
+              @click="startEditing(request)"
+              >Rename</ContextMenuItem
             >
             <ContextMenuSeparator v-if="!selectedIds.has(request.id) || selectedIds.size === 1" />
             <ContextMenuItem
