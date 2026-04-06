@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { Plus, Trash2 } from 'lucide-vue-next'
+import { ChevronDown, Plus, Trash2 } from 'lucide-vue-next'
 import { useRequestStore } from '@/stores/request.store.ts'
 import { useUIStore } from '@/stores/ui.store.ts'
 import type { TabState } from '@/types/misc.ts'
@@ -135,6 +135,17 @@ function confirmDelete() {
   selectedIds.value = new Set()
   showDeleteConfirm.value = false
   requestsToDelete.value = []
+}
+
+// ── Variables ────────────────────────────────────────────────────────────────
+const variablesOpen = ref(false)
+
+function addVariable() {
+  store.activeWorkspace?.variables.push({ key: '', value: '' })
+}
+
+function removeVariable(index: number) {
+  store.activeWorkspace?.variables.splice(index, 1)
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -279,6 +290,53 @@ function methodColor(method: string) {
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
+      </div>
+
+      <!-- Variables section -->
+      <div class="border-t shrink-0">
+        <button
+          class="flex items-center justify-between w-full px-3 py-2 hover:bg-accent transition-colors"
+          @click="variablesOpen = !variablesOpen"
+        >
+          <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >Variables</span
+          >
+          <ChevronDown
+            class="h-3 w-3 text-muted-foreground transition-transform"
+            :class="{ 'rotate-180': variablesOpen }"
+          />
+        </button>
+        <div v-show="variablesOpen" class="px-2 pb-2 max-h-48 overflow-y-auto">
+          <div
+            v-for="(variable, index) in store.activeWorkspace.variables"
+            :key="index"
+            class="flex items-center gap-1 mb-1"
+          >
+            <input
+              v-model="variable.key"
+              placeholder="name"
+              class="flex-1 min-w-0 bg-transparent border rounded-sm px-1.5 py-0.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+            />
+            <input
+              v-model="variable.value"
+              placeholder="value"
+              class="flex-1 min-w-0 bg-transparent border rounded-sm px-1.5 py-0.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+            />
+            <button
+              class="shrink-0 opacity-50 hover:opacity-100 hover:text-destructive transition-colors"
+              @click="removeVariable(index)"
+            >
+              <Trash2 class="h-3 w-3" />
+            </button>
+          </div>
+          <button
+            class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+            @click="addVariable"
+          >
+            <Plus class="h-3 w-3" />
+            Add variable
+          </button>
+        </div>
       </div>
     </template>
   </div>

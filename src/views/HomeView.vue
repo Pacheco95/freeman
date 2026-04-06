@@ -8,7 +8,7 @@ import { useRequestStore } from '@/stores/request.store.ts'
 import ImportCurlDialog from '@/components/ImportCurlDialog.vue'
 import MenuBar from '@/components/MenuBar.vue'
 import { useUIStore } from '@/stores/ui.store.ts'
-import { isTauriEnv } from '@/util.ts'
+import { interpolate, isTauriEnv } from '@/util.ts'
 import RequestTab from '@/components/RequestTab.vue'
 import RequestTabBar from '@/components/RequestTabBar.vue'
 import WorkspaceSidebar from '@/components/WorkspaceSidebar.vue'
@@ -45,25 +45,36 @@ const handleNewRequest = async () => {
   if (!tab) return
   const tabId = requestStore.activeTabId
   try {
+    const vars = Object.fromEntries(
+      (requestStore.activeWorkspace?.variables ?? []).map((v) => [v.key, v.value]),
+    )
+    const terp = (s: string) => interpolate(s, vars)
+
     let body: Request['body'] = undefined
     if (tab.bodyType === 'raw') {
-      body = tab.body
+      body = terp(tab.body)
     } else if (tab.bodyType === 'form-data') {
       const fd = new FormData()
-      tab.bodyFormRows.filter((r) => r.active).forEach((r) => fd.append(r.data.key, r.data.value))
+      tab.bodyFormRows
+        .filter((r) => r.active)
+        .forEach((r) => fd.append(terp(r.data.key), terp(r.data.value)))
       body = fd
     } else if (tab.bodyType === 'x-www-form-urlencoded') {
       const params = new URLSearchParams()
       tab.bodyFormRows
         .filter((r) => r.active)
-        .forEach((r) => params.append(r.data.key, r.data.value))
+        .forEach((r) => params.append(terp(r.data.key), terp(r.data.value)))
       body = params.toString()
     }
     const request: Request = {
       method: tab.method,
-      url: tab.url,
-      params: tab.params.filter((p) => p.active).map((p) => p.data),
-      headers: tab.headers.filter((h) => h.active).map((h) => h.data),
+      url: terp(tab.url),
+      params: tab.params
+        .filter((p) => p.active)
+        .map((p) => ({ key: terp(p.data.key), value: terp(p.data.value) })),
+      headers: tab.headers
+        .filter((h) => h.active)
+        .map((h) => ({ key: terp(h.data.key), value: terp(h.data.value) })),
       body,
     }
     const r = await makeRequest(request)

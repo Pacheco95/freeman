@@ -33,6 +33,7 @@ function createWorkspace(id: number, name: string): Workspace {
     openRequestIds: [],
     activeRequestId: 0,
     nextRequestId: 1,
+    variables: [],
   }
 }
 
@@ -302,7 +303,11 @@ export const useRequestStore = defineStore(
   {
     persist: {
       afterHydrate: (ctx: import('pinia').PiniaPluginContext) => {
-        ;(ctx.store as unknown as { _initWatchers: () => void })._initWatchers()
+        const store = ctx.store as unknown as { _initWatchers: () => void; workspaces: Workspace[] }
+        for (const ws of store.workspaces) {
+          ws.variables ??= []
+        }
+        store._initWatchers()
       },
     },
   },

@@ -1,7 +1,7 @@
 import { ask, open } from '@tauri-apps/plugin-dialog'
 import { exists, mkdir, readDir, readTextFile, remove, writeTextFile } from '@tauri-apps/plugin-fs'
 import { join } from '@tauri-apps/api/path'
-import type { TabState } from '@/types/misc.ts'
+import type { KeyValue, TabState } from '@/types/misc.ts'
 
 export type WorkspaceData = {
   name: string
@@ -9,6 +9,7 @@ export type WorkspaceData = {
   openRequestIds: number[]
   activeRequestId: number
   nextRequestId: number
+  variables: KeyValue[]
 }
 
 type WorkspaceMeta = {
@@ -16,6 +17,7 @@ type WorkspaceMeta = {
   name: string
   openRequestIds: number[]
   activeRequestId: number
+  variables: KeyValue[]
 }
 
 function sanitizeFilename(name: string): string {
@@ -27,6 +29,7 @@ export async function saveWorkspace(
   openRequestIds: number[],
   activeRequestId: number,
   name: string,
+  variables: KeyValue[],
 ): Promise<boolean> {
   const dir = await open({ directory: true, title: 'Select Workspace Folder' })
   if (dir === null) return false
@@ -60,7 +63,7 @@ export async function saveWorkspace(
   const requestsDir = await join(dir, 'requests')
   await mkdir(requestsDir, { recursive: true })
 
-  const meta: WorkspaceMeta = { version: 2, name, openRequestIds, activeRequestId }
+  const meta: WorkspaceMeta = { version: 2, name, openRequestIds, activeRequestId, variables }
   await writeTextFile(metaPath, JSON.stringify(meta, null, 2))
 
   for (let i = 0; i < requests.length; i++) {
@@ -102,5 +105,6 @@ export async function loadWorkspace(): Promise<WorkspaceData | null> {
     openRequestIds,
     activeRequestId,
     nextRequestId,
+    variables: meta.variables ?? [],
   }
 }

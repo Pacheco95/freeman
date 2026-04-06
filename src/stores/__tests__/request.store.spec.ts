@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { nextTick } from 'vue'
 import { useRequestStore } from '@/stores/request.store.ts'
+import { interpolate } from '@/util.ts'
+import { mergeActiveParamsIntoUrl } from '@/composables/useUrlParamsSync.ts'
 
 const flushStoreWatchers = async () => {
   await nextTick()
@@ -445,6 +447,90 @@ describe('request store', () => {
       await flushStoreWatchers()
 
       expect(store.activeTab!.params).toEqual([{ active: true, data: { key: 'q', value: 'test' } }])
+    })
+  })
+})
+
+describe('interpolate', () => {
+  it('replaces a single variable', () => {
+    expect(interpolate('{{greeting}} world', { greeting: 'hello' })).toBe('hello world')
+  })
+
+  it('replaces multiple variables', () => {
+    expect(interpolate('{{a}} + {{b}}', { a: '1', b: '2' })).toBe('1 + 2')
+  })
+
+  it('replaces the same variable used more than once', () => {
+    expect(interpolate('{{x}}/{{x}}', { x: 'foo' })).toBe('foo/foo')
+  })
+
+  it('leaves unresolved tokens intact', () => {
+    expect(interpolate('{{missing}}', {})).toBe('{{missing}}')
+  })
+
+  it('trims whitespace inside the braces', () => {
+    expect(interpolate('{{ base_url }}/path', { base_url: 'https://example.com' })).toBe(
+      'https://example.com/path',
+    )
+  })
+
+  it('returns the template unchanged when variables is empty', () => {
+    expect(interpolate('no vars here', {})).toBe('no vars here')
+  })
+})
+
+describe('mergeActiveParamsIntoUrl — template variable preservation', () => {
+  it('preserves {{}} in the URL path when merging params', () => {
+    const result = mergeActiveParamsIntoUrl('{{base_url}}/users', [
+      { active: true, data: { key: 'page', value: '1' } },
+    ])
+    expect(result).toBe('{{base_url}}/users?page=1')
+  })
+
+  it('preserves {{}} in absolute URL path when merging params', () => {
+    const result = mergeActiveParamsIntoUrl('https://{{host}}/api', [
+      { active: true, data: { key: 'v', value: '2' } },
+    ])
+    expect(result).toBe('https://{{host}}/api?v=2')
+  })
+
+  it('preserves {{}} in param values in the reconstructed query string', () => {
+    const result = mergeActiveParamsIntoUrl('https://api.example.com/data', [
+      { active: true, data: { key: 'auth', value: '{{token}}' } },
+    ])
+    expect(result).toBe('https://api.example.com/data?auth={{token}}')
+  })
+
+  it('preserves {{}} in both path and param values', () => {
+    const result = mergeActiveParamsIntoUrl('{{base_url}}/data', [
+      { active: true, data: { key: 'token', value: '{{api_key}}' } },
+    ])
+    expect(result).toBe('{{base_url}}/data?token={{api_key}}')
+  })
+
+  it('URL-params round-trip keeps template variables intact', async () => {
+    setActivePinia(createPinia())
+    const store = useRequestStore()
+    store.createWorkspace('Test')
+    store.addTab()
+    await nextTick()
+    await nextTick()
+
+    store.activeTab!.url = 'https://api.example.com/users'
+    await nextTick()
+    await nextTick()
+
+    store.activeTab!.params = [
+      { active: true, data: { key: 'auth', value: '{{token}}' } },
+      { active: false, data: { key: '', value: '' } },
+    ]
+    await nextTick()
+    await nextTick()
+
+    expect(store.activeTab!.url).toBe('https://api.example.com/users?auth={{token}}')
+    expect(store.activeTab!.params[0]).toEqual({
+      active: true,
+      data: { key: 'auth', value: '{{token}}' },
     })
   })
 })

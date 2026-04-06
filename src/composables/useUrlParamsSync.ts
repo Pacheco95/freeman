@@ -24,21 +24,24 @@ export function mergeActiveParamsIntoUrl(urlStr: string, rows: ParamRow[]): stri
       sp.append(row.data.key, row.data.value)
     }
   }
-  const search = sp.toString()
+  // URLSearchParams encodes `{{` → `%7B%7B` and `}}` → `%7D%7D`.
+  // Decode them back so template variable syntax is preserved in the stored URL.
+  const search = sp
+    .toString()
+    .replace(/%7B%7B([^%]*?)%7D%7D/gi, (_, inner) => `{{${decodeURIComponent(inner)}}}`)
+
   const trimmed = urlStr.trim()
-  if (!trimmed) {
-    return search ? `?${search}` : ''
-  }
-  try {
-    const u = new URL(urlStr, URL_FALLBACK_BASE)
-    u.search = search
-    if (/^https?:\/\//i.test(trimmed)) {
-      return u.href
-    }
-    return `${u.pathname}${u.search}${u.hash}`
-  } catch {
-    return urlStr
-  }
+  if (!trimmed) return search ? `?${search}` : ''
+
+  // Reconstruct using the original string rather than going through `new URL()`,
+  // which would percent-encode `{{` and `}}` in the path.
+  const hashIdx = trimmed.indexOf('#')
+  const beforeHash = hashIdx !== -1 ? trimmed.slice(0, hashIdx) : trimmed
+  const hash = hashIdx !== -1 ? trimmed.slice(hashIdx) : ''
+  const qIdx = beforeHash.indexOf('?')
+  const base = qIdx !== -1 ? beforeHash.slice(0, qIdx) : beforeHash
+
+  return `${base}${search ? `?${search}` : ''}${hash}`
 }
 
 export function useUrlParamsSync(

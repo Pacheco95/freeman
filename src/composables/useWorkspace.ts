@@ -10,9 +10,14 @@ export function useWorkspace() {
     if (!ws) return
     // JSON round-trip strips Vue reactive proxies before passing to the service
     const plainRequests = JSON.parse(JSON.stringify(ws.requests))
-    await saveWorkspace(plainRequests, ws.openRequestIds, ws.activeRequestId, ws.name).catch(
-      console.error,
-    )
+    const plainVariables = JSON.parse(JSON.stringify(ws.variables))
+    await saveWorkspace(
+      plainRequests,
+      ws.openRequestIds,
+      ws.activeRequestId,
+      ws.name,
+      plainVariables,
+    ).catch(console.error)
   }
 
   async function load() {
@@ -35,6 +40,7 @@ export function useWorkspace() {
     ws.openRequestIds = data.openRequestIds
     ws.activeRequestId = data.activeRequestId
     ws.nextRequestId = data.nextRequestId
+    ws.variables = data.variables
     store._initWatchers()
   }
 
