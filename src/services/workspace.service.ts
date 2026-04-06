@@ -1,5 +1,5 @@
-import { open } from '@tauri-apps/plugin-dialog'
-import { mkdir, readDir, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { ask, open } from '@tauri-apps/plugin-dialog'
+import { exists, mkdir, readDir, readTextFile, remove, writeTextFile } from '@tauri-apps/plugin-fs'
 import { join } from '@tauri-apps/api/path'
 import type { TabState } from '@/types/misc.ts'
 
@@ -31,11 +31,37 @@ export async function saveWorkspace(
   const dir = await open({ directory: true, title: 'Select Workspace Folder' })
   if (dir === null) return false
 
+  const metaPath = await join(dir, 'workspace.json')
+  if (await exists(metaPath)) {
+    let existingName = 'Unknown'
+    try {
+      const existing = JSON.parse(await readTextFile(metaPath)) as WorkspaceMeta
+      existingName = existing.name ?? existingName
+    } catch {}
+
+    const confirmed = await ask(
+      `This folder already contains a workspace named "${existingName}". Saving will overwrite it and remove any requests not in the current workspace. Continue?`,
+      { title: 'Overwrite workspace?', kind: 'warning' },
+    )
+    if (!confirmed) return false
+
+    // Remove stale request files so orphaned entries don't reappear on re-import
+    const requestsDir = await join(dir, 'requests')
+    if (await exists(requestsDir)) {
+      const stale = await readDir(requestsDir)
+      await Promise.all(
+        stale
+          .filter((e) => e.name.endsWith('.json'))
+          .map(async (e) => remove(await join(requestsDir, e.name))),
+      )
+    }
+  }
+
   const requestsDir = await join(dir, 'requests')
   await mkdir(requestsDir, { recursive: true })
 
   const meta: WorkspaceMeta = { version: 2, name, openRequestIds, activeRequestId }
-  await writeTextFile(await join(dir, 'workspace.json'), JSON.stringify(meta, null, 2))
+  await writeTextFile(metaPath, JSON.stringify(meta, null, 2))
 
   for (let i = 0; i < requests.length; i++) {
     const request = requests[i]!

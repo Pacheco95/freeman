@@ -1,3 +1,4 @@
+import { ask } from '@tauri-apps/plugin-dialog'
 import { useRequestStore } from '@/stores/request.store.ts'
 import { loadWorkspace, saveWorkspace } from '@/services/workspace.service.ts'
 
@@ -17,6 +18,15 @@ export function useWorkspace() {
   async function load() {
     const data = await loadWorkspace()
     if (!data) return
+
+    const duplicate = store.workspaces.find((w) => w.name === data.name)
+    if (duplicate) {
+      const confirmed = await ask(
+        `A workspace named "${data.name}" already exists. Import it as a separate workspace anyway?`,
+        { title: 'Workspace already exists', kind: 'warning' },
+      )
+      if (!confirmed) return
+    }
 
     store.createWorkspace(data.name)
     const ws = store.activeWorkspace
