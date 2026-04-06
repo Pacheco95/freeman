@@ -50,24 +50,40 @@ function createWorkspace() {
 
 // ── Multi-select ─────────────────────────────────────────────────────────────
 const selectedIds = ref<Set<number>>(new Set())
+const anchorId = ref<number | null>(null)
+
 watch(
   () => store.activeWorkspaceId,
   () => {
     selectedIds.value = new Set()
+    anchorId.value = null
   },
 )
 
 function handleRequestClick(request: TabState, event: MouseEvent) {
-  if (event.ctrlKey || event.metaKey) {
+  if (event.shiftKey && anchorId.value !== null) {
+    const requests = store.activeWorkspace?.requests ?? []
+    const anchorIndex = requests.findIndex((r) => r.id === anchorId.value)
+    const currentIndex = requests.findIndex((r) => r.id === request.id)
+    if (anchorIndex !== -1 && currentIndex !== -1) {
+      const from = Math.min(anchorIndex, currentIndex)
+      const to = Math.max(anchorIndex, currentIndex)
+      const next = new Set(selectedIds.value)
+      for (let i = from; i <= to; i++) next.add(requests[i]!.id)
+      selectedIds.value = next
+    }
+  } else if (event.ctrlKey || event.metaKey) {
     const next = new Set(selectedIds.value)
     if (next.has(request.id)) {
       next.delete(request.id)
     } else {
       next.add(request.id)
+      anchorId.value = request.id
     }
     selectedIds.value = next
   } else {
     selectedIds.value = new Set()
+    anchorId.value = request.id
     store.openRequest(request.id)
   }
 }
@@ -177,13 +193,21 @@ function methodColor(method: string) {
             </button>
           </ContextMenuTrigger>
           <ContextMenuContent>
-            <ContextMenuItem @click="store.openRequest(request.id)">Open</ContextMenuItem>
-            <ContextMenuSeparator />
+            <ContextMenuItem
+              v-if="!selectedIds.has(request.id) || selectedIds.size === 1"
+              @click="store.openRequest(request.id)"
+              >Open</ContextMenuItem
+            >
+            <ContextMenuSeparator v-if="!selectedIds.has(request.id) || selectedIds.size === 1" />
             <ContextMenuItem
               class="text-destructive focus:text-destructive"
               @click="promptDelete(request)"
             >
-              Delete
+              {{
+                selectedIds.has(request.id) && selectedIds.size > 1
+                  ? `Delete ${selectedIds.size} requests`
+                  : 'Delete'
+              }}
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
