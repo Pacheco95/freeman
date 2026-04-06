@@ -18,13 +18,13 @@ export function useWorkspace() {
     const data = await loadWorkspace()
     if (!data) return
 
+    store.createWorkspace(data.name)
     const ws = store.activeWorkspace
     if (!ws) return
     ws.requests = data.requests
     ws.openRequestIds = data.openRequestIds
     ws.activeRequestId = data.activeRequestId
     ws.nextRequestId = data.nextRequestId
-    if (data.name) ws.name = data.name
     store._initWatchers()
   }
 
