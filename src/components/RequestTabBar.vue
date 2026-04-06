@@ -19,6 +19,7 @@ const emit = defineEmits<{
   closeTab: [id: number]
   closeAllTabs: []
   renameTab: [id: number, label: string]
+  deleteTab: [id: number]
 }>()
 
 const editingTabId = ref<number | null>(null)
@@ -74,6 +75,13 @@ function cancelRename() {
           <ContextMenuItem @click="emit('closeTab', tab.id)">Close</ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem @click="emit('closeAllTabs')">Close all</ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            class="text-destructive focus:text-destructive"
+            @click="emit('deleteTab', tab.id)"
+          >
+            Delete
+          </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
     </TabsList>

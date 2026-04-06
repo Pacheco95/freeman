@@ -158,6 +158,7 @@ function confirmImportWithWorkspace() {
                     @close-tab="requestStore.closeTab"
                     @close-all-tabs="requestStore.closeAllTabs"
                     @rename-tab="requestStore.renameTab"
+                    @delete-tab="requestStore.deleteRequest"
                   />
                 </ScrollAreaViewport>
                 <ScrollBar orientation="horizontal" />
