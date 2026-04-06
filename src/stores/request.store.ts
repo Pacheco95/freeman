@@ -251,12 +251,19 @@ export const useRequestStore = defineStore(
     }
 
     function deleteWorkspace(id: number) {
-      if (workspaces.value.length <= 1) return
       const index = workspaces.value.findIndex((w) => w.id === id)
       if (index === -1) return
       workspaces.value.splice(index, 1)
       if (activeWorkspaceId.value === id) {
-        switchWorkspace(workspaces.value[Math.max(0, index - 1)]!.id)
+        const next = workspaces.value[Math.max(0, index - 1)]
+        if (next) {
+          switchWorkspace(next.id)
+        } else {
+          for (const handles of stopHandlesMap.values()) handles.forEach((h) => h())
+          stopHandlesMap.clear()
+          syncingMap.clear()
+          activeWorkspaceId.value = 0
+        }
       }
     }
 

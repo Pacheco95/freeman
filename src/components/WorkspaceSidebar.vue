@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Plus } from 'lucide-vue-next'
+import { Plus, Trash2 } from 'lucide-vue-next'
 import { useRequestStore } from '@/stores/request.store.ts'
 import { useUIStore } from '@/stores/ui.store.ts'
 import type { TabState } from '@/types/misc.ts'
@@ -88,6 +88,14 @@ function handleRequestClick(request: TabState, event: MouseEvent) {
   }
 }
 
+// ── Workspace deletion ───────────────────────────────────────────────────────
+const showDeleteWorkspaceConfirm = ref(false)
+
+function confirmDeleteWorkspace() {
+  store.deleteWorkspace(store.activeWorkspaceId)
+  showDeleteWorkspaceConfirm.value = false
+}
+
 // ── Request deletion ─────────────────────────────────────────────────────────
 const showDeleteConfirm = ref(false)
 const requestsToDelete = ref<TabState[]>([])
@@ -147,6 +155,16 @@ function methodColor(method: string) {
         @click="ui.openCreateWorkspaceModal()"
       >
         <Plus class="h-4 w-4" />
+      </Button>
+      <Button
+        v-if="store.activeWorkspace"
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
+        title="Delete workspace"
+        @click="showDeleteWorkspaceConfirm = true"
+      >
+        <Trash2 class="h-4 w-4" />
       </Button>
     </div>
 
@@ -231,6 +249,33 @@ function methodColor(method: string) {
       <DialogFooter>
         <Button variant="outline" @click="ui.closeCreateWorkspaceModal()">Cancel</Button>
         <Button :disabled="!newWorkspaceName.trim()" @click="createWorkspace">Create</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+
+  <!-- Delete workspace confirmation dialog -->
+  <Dialog v-model:open="showDeleteWorkspaceConfirm">
+    <DialogContent class="sm:max-w-sm">
+      <DialogHeader>
+        <DialogTitle>Delete "{{ store.activeWorkspace?.name }}"?</DialogTitle>
+        <DialogDescription>
+          <template v-if="store.activeWorkspace && store.activeWorkspace.requests.length > 0">
+            This workspace and its
+            {{
+              store.activeWorkspace.requests.length === 1
+                ? '1 request'
+                : `${store.activeWorkspace.requests.length} requests`
+            }}
+            will be permanently deleted. This cannot be undone.
+          </template>
+          <template v-else>
+            This workspace will be permanently deleted. This cannot be undone.
+          </template>
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button variant="outline" @click="showDeleteWorkspaceConfirm = false">Cancel</Button>
+        <Button variant="destructive" @click="confirmDeleteWorkspace">Delete</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
