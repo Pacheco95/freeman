@@ -354,6 +354,88 @@ describe('request store', () => {
       })
     })
 
+    describe('deleteWorkspace', () => {
+      it('removes the workspace from the list', () => {
+        const store = useRequestStore()
+        store.deleteWorkspace(store.activeWorkspaceId)
+
+        expect(store.workspaces).toHaveLength(0)
+      })
+
+      it('deleting the last workspace sets activeWorkspaceId to 0 and clears tabs', () => {
+        const store = useRequestStore()
+        store.deleteWorkspace(store.activeWorkspaceId)
+
+        expect(store.activeWorkspaceId).toBe(0)
+        expect(store.activeWorkspace).toBeNull()
+        expect(store.tabs).toHaveLength(0)
+        expect(store.activeTab).toBeNull()
+      })
+
+      it('deletes the workspace along with all its requests', async () => {
+        const store = useRequestStore()
+        store.addTab()
+        store.addTab()
+        await flushStoreWatchers()
+
+        expect(store.activeWorkspace!.requests).toHaveLength(3)
+
+        store.deleteWorkspace(store.activeWorkspaceId)
+
+        expect(store.workspaces).toHaveLength(0)
+      })
+
+      it('switches to another workspace when the active one is deleted', () => {
+        const store = useRequestStore()
+        const firstId = store.activeWorkspaceId
+        store.createWorkspace('Second')
+        store.switchWorkspace(firstId)
+
+        store.deleteWorkspace(firstId)
+
+        expect(store.workspaces).toHaveLength(1)
+        expect(store.workspaces[0]!.name).toBe('Second')
+        expect(store.activeWorkspaceId).toBe(store.workspaces[0]!.id)
+      })
+
+      it('does not affect the active workspace when a different one is deleted', () => {
+        const store = useRequestStore()
+        const firstId = store.activeWorkspaceId
+        store.createWorkspace('Second')
+
+        store.deleteWorkspace(firstId)
+
+        expect(store.workspaces).toHaveLength(1)
+        expect(store.activeWorkspace!.name).toBe('Second')
+      })
+
+      it('is a no-op for a non-existent workspace id', () => {
+        const store = useRequestStore()
+        store.deleteWorkspace(999)
+
+        expect(store.workspaces).toHaveLength(1)
+        expect(store.activeWorkspaceId).toBe(1)
+      })
+
+      it('URL-params sync works after switching to remaining workspace', async () => {
+        const store = useRequestStore()
+        const firstId = store.activeWorkspaceId
+        store.createWorkspace('Second')
+        store.addTab()
+        await flushStoreWatchers()
+
+        store.deleteWorkspace(firstId)
+        await flushStoreWatchers()
+
+        store.activeTab!.url = 'https://example.com?q=test'
+        await flushStoreWatchers()
+
+        expect(store.activeTab!.params).toEqual([
+          { active: true, data: { key: 'q', value: 'test' } },
+        ])
+      })
+    })
+
     it('URL-params sync works on newly added tabs', async () => {
       const store = useRequestStore()
       store.addTab()
