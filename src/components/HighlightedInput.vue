@@ -17,10 +17,9 @@ const emit = defineEmits<{
 const store = useRequestStore()
 const attrs = useAttrs()
 // Everything except `class` is forwarded to the inner <input> (e.g. `name`, `type`, `disabled`)
-const inputAttrs = computed(() => {
-  const { class: _, ...rest } = attrs
-  return rest
-})
+const inputAttrs = computed(() =>
+  Object.fromEntries(Object.entries(attrs).filter(([k]) => k !== 'class')),
+)
 
 const inputRef = ref<HTMLInputElement>()
 const mirrorRef = ref<HTMLSpanElement>()

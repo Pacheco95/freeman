@@ -183,7 +183,7 @@ export const useRequestStore = defineStore(
     function closeAllTabs() {
       const ws = activeWorkspace.value
       if (!ws) return
-      for (const id of [...ws.openRequestIds]) unregisterWatchers(id)
+      for (const id of ws.openRequestIds) unregisterWatchers(id)
       ws.openRequestIds = []
       ws.activeRequestId = 0
     }
