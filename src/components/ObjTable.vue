@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
+import HighlightedInput from '@/components/HighlightedInput.vue'
 import { Button } from '@/components/ui/button'
 import { GripVertical, Trash2 } from 'lucide-vue-next'
 import { nextTick, ref, watch } from 'vue'
@@ -122,7 +122,10 @@ const onDrop = (_event: DragEvent, dropIndex: number) => {
           </div>
         </TableCell>
         <TableCell v-for="column in columns" :key="column.title">
-          <Input class="rounded-none border-none shadow-none" v-model="row.data[column.field]" />
+          <HighlightedInput
+            class="rounded-none border-none shadow-none"
+            v-model="row.data[column.field]"
+          />
         </TableCell>
         <TableCell class="w-8">
           <Button variant="ghost" size="sm" @click="removeRow(index)" class="cursor-pointer">
@@ -141,7 +144,7 @@ const onDrop = (_event: DragEvent, dropIndex: number) => {
           </div>
         </TableCell>
         <TableCell v-for="(column, colIdx) in columns" :key="column.title">
-          <Input
+          <HighlightedInput
             class="rounded-none border-none shadow-none"
             v-model="placeholderData[column.field]"
             @focus="activePlaceholderColIndex = colIdx"

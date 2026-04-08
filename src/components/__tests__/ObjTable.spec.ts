@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import ObjTable from '@/components/ObjTable.vue'
 import {
   Table,
@@ -19,6 +20,10 @@ type TestData = {
 type Row = { data: TestData; active: boolean }
 
 describe('ObjTable', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   const columns = [
     { title: 'Name', field: 'name' as keyof TestData },
     { title: 'Value', field: 'value' as keyof TestData },
@@ -107,13 +112,13 @@ describe('ObjTable', () => {
       props: { columns },
       global: {
         components: { Table, TableBody, TableCell, TableHead, TableHeader, TableRow },
-        stubs: ['Checkbox', 'Input', 'Button'],
+        stubs: ['Checkbox', 'HighlightedInput', 'Button'],
       },
     })
     await wrapper.setProps({ rows })
     await nextTick()
 
-    const inputs = wrapper.findAllComponents({ name: 'Input' })
+    const inputs = wrapper.findAllComponents({ name: 'HighlightedInput' })
     expect(inputs).toHaveLength(4) // 2 for the real row + 2 for the placeholder row
 
     await inputs[0]!.setValue('new name')

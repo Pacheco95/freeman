@@ -1,6 +1,18 @@
 import { expect, test } from '@playwright/test'
 import type { Page, Locator } from '@playwright/test'
 
+async function setupWorkspace(page: Page) {
+  await page
+    .getByRole('button', { name: 'New Workspace' })
+    .filter({ hasText: 'New Workspace' })
+    .click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByPlaceholder('Workspace name').fill('Test')
+  await dialog.getByRole('button', { name: 'Create' }).click()
+  await expect(dialog).toBeHidden()
+  await page.getByRole('button', { name: 'New Request' }).filter({ hasText: 'New Request' }).click()
+}
+
 async function openImportDialog(page: Page) {
   await page.getByRole('menubar').getByText('File').click()
   await page.getByRole('menuitem', { name: 'Import' }).click()
@@ -22,6 +34,7 @@ function activeTab(page: Page): Locator {
 test.describe('cURL import', () => {
   test.beforeEach(async ({ page }: { page: Page }) => {
     await page.goto('/')
+    await setupWorkspace(page)
   })
 
   test('simple POST with JSON body fills method, url, headers and body', async ({ page }) => {
@@ -33,7 +46,7 @@ test.describe('cURL import', () => {
     const tab = activeTab(page)
 
     // Method and URL
-    await expect(page.getByRole('combobox').first()).toHaveText('POST')
+    await expect(tab.getByRole('combobox').first()).toHaveText('POST')
     await expect(tab.locator('input[name="requestUrl"]')).toHaveValue(`http://test/posts`)
 
     // Params tab — no params expected
@@ -96,7 +109,7 @@ test.describe('cURL import', () => {
 
     const tab = activeTab(page)
 
-    await expect(page.getByRole('combobox').first()).toHaveText('PUT')
+    await expect(tab.getByRole('combobox').first()).toHaveText('PUT')
 
     await tab.getByRole('tab', { name: 'Headers' }).click()
     const headerRows = tab.locator('[data-state="active"][id*="headers"] table tbody tr')

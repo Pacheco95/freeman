@@ -70,10 +70,10 @@ const handleNewRequest = async () => {
       method: tab.method,
       url: terp(tab.url),
       params: tab.params
-        .filter((p) => p.active)
+        .filter((p) => p.active && p.data.key !== '')
         .map((p) => ({ key: terp(p.data.key), value: terp(p.data.value) })),
       headers: tab.headers
-        .filter((h) => h.active)
+        .filter((h) => h.active && h.data.key !== '')
         .map((h) => ({ key: terp(h.data.key), value: terp(h.data.value) })),
       body,
     }
@@ -84,6 +84,7 @@ const handleNewRequest = async () => {
       response: null,
       body: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
     }
+    console.error(error)
   }
 }
 

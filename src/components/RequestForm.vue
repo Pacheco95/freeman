@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import MethodSelect from '@/components/MethodSelect.vue'
 import { computed } from 'vue'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import HighlightedInput from '@/components/HighlightedInput.vue'
 import type { Method } from '@/types/Request.ts'
 
 export type RequestFormData = {
@@ -37,7 +37,7 @@ const handleSubmit = () => {
   <form @submit.prevent="handleSubmit">
     <fieldset class="flex">
       <MethodSelect class="rounded-r-none border-r-0" v-model="method" />
-      <Input
+      <HighlightedInput
         name="requestUrl"
         v-model="url"
         class="rounded-l-none border-l-0 rounded-r-none border-r-0"

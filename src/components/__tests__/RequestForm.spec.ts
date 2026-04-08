@@ -1,9 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import RequestForm from '@/components/RequestForm.vue'
 
 describe('RequestForm', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   it('renders the URL input and submit button', () => {
     const wrapper = mount(RequestForm, { props: { method: 'GET', url: '' } })
     expect(wrapper.find('input[name="requestUrl"]').exists()).toBe(true)
