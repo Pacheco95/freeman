@@ -24,9 +24,12 @@ const inputAttrs = computed(() => {
 
 const inputRef = ref<HTMLInputElement>()
 const mirrorRef = ref<HTMLSpanElement>()
+const isFocused = ref(false)
+const cursorOffset = ref(0)
 
 function onInput(e: Event) {
   emit('update:modelValue', (e.target as HTMLInputElement).value)
+  updateCursor()
 }
 
 // Keep the mirror's scroll position in sync with the input's horizontal scroll.
@@ -36,21 +39,71 @@ function syncScroll() {
   }
 }
 
+function updateCursor() {
+  cursorOffset.value = inputRef.value?.selectionStart ?? 0
+}
+
+function onFocus() {
+  isFocused.value = true
+  updateCursor()
+}
+
+function onBlur() {
+  isFocused.value = false
+}
+
 const definedVars = computed(
   () => new Set((store.activeWorkspace?.variables ?? []).map((v) => v.key)),
 )
 
+// The cursor is a zero-layout-impact inline element whose ::after draws the blinking line.
+const CURSOR_HTML = '<span class="hi-cursor" aria-hidden="true"></span>'
+
 const highlighted = computed(() => {
   const text = props.modelValue ?? ''
-  // Escape HTML so user-typed content can never inject markup.
-  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  return escaped.replace(/\{\{([^}]*)\}\}/g, (_, inner: string) => {
-    const resolved = definedVars.value.has(inner.trim())
-    const cls = resolved
-      ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
-      : 'bg-red-500/15 text-red-600 dark:text-red-400'
-    return `<mark class="${cls} rounded-sm not-italic">{{${inner}}}</mark>`
-  })
+  const cursor = isFocused.value ? cursorOffset.value : null
+
+  // Collect {{...}} spans once so we can open/close <mark> tags as we iterate.
+  const spans: { start: number; end: number; cls: string }[] = []
+  const re = /\{\{([^}]*)\}\}/g
+  let m
+  while ((m = re.exec(text)) !== null) {
+    const resolved = definedVars.value.has(m[1].trim())
+    spans.push({
+      start: m.index,
+      end: m.index + m[0].length,
+      cls: resolved
+        ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
+        : 'bg-red-500/15 text-red-600 dark:text-red-400',
+    })
+  }
+
+  let result = ''
+  let spanIdx = 0
+
+  // Iterate over every character position plus one sentinel for the trailing cursor.
+  for (let i = 0; i <= text.length; i++) {
+    // Insert cursor *before* the character at position i.
+    if (cursor === i) result += CURSOR_HTML
+    if (i === text.length) break
+
+    // Open <mark> when a highlighted span begins here.
+    if (spanIdx < spans.length && spans[spanIdx]!.start === i) {
+      result += `<mark class="${spans[spanIdx]!.cls} rounded-sm not-italic">`
+    }
+
+    // Emit the character, HTML-escaped.
+    const ch = text[i]!
+    result += ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : ch
+
+    // Close <mark> when the span ends after this character.
+    if (spanIdx < spans.length && spans[spanIdx]!.end === i + 1) {
+      result += '</mark>'
+      spanIdx++
+    }
+  }
+
+  return result
 })
 </script>
 
@@ -74,9 +127,14 @@ const highlighted = computed(() => {
       v-bind="inputAttrs"
       :value="props.modelValue"
       :placeholder="props.placeholder"
-      class="h-full w-full bg-transparent px-3 py-1 text-base md:text-sm text-transparent outline-none placeholder:text-muted-foreground [caret-color:hsl(var(--foreground))] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+      class="h-full w-full bg-transparent px-3 py-1 text-base md:text-sm text-transparent outline-none placeholder:text-muted-foreground [caret-color:transparent] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
       @input="onInput"
       @scroll="syncScroll"
+      @focus="onFocus"
+      @blur="onBlur"
+      @keyup="updateCursor"
+      @mouseup="updateCursor"
+      @click="updateCursor"
     />
 
     <!-- Mirror: absolute overlay painted on top; pointer-events-none so clicks pass through -->
@@ -88,3 +146,32 @@ const highlighted = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/*
+  width: 1.5px draws the blinking line; margin-right: -1.5px pulls the next character
+  back so the cursor takes no layout space and surrounding text never shifts.
+  vertical-align: middle aligns to the midpoint of the x-height, which matches the
+  visual center of the text regardless of line-height.
+*/
+:deep(.hi-cursor) {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.2em;
+  background: currentColor;
+  vertical-align: middle;
+  margin-right: -1.5px;
+  animation: hi-cursor-blink 1s step-end infinite;
+}
+
+/* @keyframes are always global — the unique name avoids collisions. */
+@keyframes hi-cursor-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+</style>
