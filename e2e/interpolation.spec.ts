@@ -17,10 +17,6 @@ async function setupWorkspace(page: Page) {
   await page.getByRole('button', { name: 'New Request' }).filter({ hasText: 'New Request' }).click()
 }
 
-async function openVariables(page: Page) {
-  await page.getByRole('button', { name: 'Variables' }).click()
-}
-
 async function addVariable(page: Page, key: string, value: string) {
   const rows = page.locator('[data-testid="variables-table"] tbody tr')
   const countBefore = await rows.count()
@@ -52,7 +48,6 @@ test.describe('variable interpolation', () => {
   })
 
   test('resolved {{var}} in URL is highlighted orange', async ({ page }) => {
-    await openVariables(page)
     await addVariable(page, 'host', 'example.com')
 
     await activeTab(page).locator('input[name="requestUrl"]').fill('http://{{host}}/api')
@@ -70,7 +65,6 @@ test.describe('variable interpolation', () => {
     await expect(activeTab(page).locator('mark').first()).toHaveClass(/text-red-/)
 
     // Define the variable → should turn orange reactively
-    await openVariables(page)
     await addVariable(page, 'env', 'production')
 
     await expect(activeTab(page).locator('mark').first()).toHaveClass(/text-orange-/)
@@ -79,7 +73,6 @@ test.describe('variable interpolation', () => {
   test('variable in URL path is substituted on submit', async ({ page }) => {
     await page.route('http://example.com/**', (route) => route.fulfill({ status: 200, body: '' }))
 
-    await openVariables(page)
     await addVariable(page, 'version', 'v2')
 
     await activeTab(page)
@@ -97,7 +90,6 @@ test.describe('variable interpolation', () => {
   test('variable in query param value is substituted on submit', async ({ page }) => {
     await page.route('http://example.com/**', (route) => route.fulfill({ status: 200, body: '' }))
 
-    await openVariables(page)
     await addVariable(page, 'page_num', '3')
 
     await activeTab(page).locator('input[name="requestUrl"]').fill('http://example.com/api')
@@ -123,7 +115,6 @@ test.describe('variable interpolation', () => {
   test('variable in header value is substituted on submit', async ({ page }) => {
     await page.route('http://example.com/**', (route) => route.fulfill({ status: 200, body: '' }))
 
-    await openVariables(page)
     await addVariable(page, 'token', 'secret-abc')
 
     await activeTab(page).locator('input[name="requestUrl"]').fill('http://example.com/api')
@@ -172,7 +163,6 @@ test.describe('variable interpolation', () => {
       route.fulfill({ status: 200, body: '' }),
     )
 
-    await openVariables(page)
     await addVariable(page, 'base', 'http://api.example.com')
     await addVariable(page, 'version', 'v1')
 

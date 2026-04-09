@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { ChevronDown, Plus, Trash2 } from 'lucide-vue-next'
+import { Plus, Trash2 } from 'lucide-vue-next'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { useRequestStore } from '@/stores/request.store.ts'
 import { useUIStore } from '@/stores/ui.store.ts'
 import type { TabState } from '@/types/misc.ts'
@@ -139,8 +140,6 @@ function confirmDelete() {
 }
 
 // ── Variables ────────────────────────────────────────────────────────────────
-const variablesOpen = ref(false)
-
 const variableColumns = [
   { title: 'Name', field: 'key' as const },
   { title: 'Value', field: 'value' as const },
@@ -217,101 +216,102 @@ function methodColor(method: string) {
         </Button>
       </div>
 
-      <!-- Request tree -->
-      <div class="flex-1 overflow-y-auto px-1 pb-2">
-        <ContextMenu v-for="request in store.activeWorkspace.requests" :key="request.id">
-          <ContextMenuTrigger as-child>
-            <button
-              class="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm hover:bg-accent transition-colors"
-              :class="{
-                'bg-accent': store.activeTabId === request.id,
-                'ring-1 ring-primary bg-primary/10': selectedIds.has(request.id),
-              }"
-              @click="handleRequestClick(request, $event)"
-            >
-              <span
-                class="font-mono text-xs font-bold w-16 shrink-0 text-left truncate"
-                :class="methodColor(request.method)"
-                >{{ request.method }}</span
+      <ResizablePanelGroup direction="vertical" class="flex-1 min-h-0">
+        <!-- Request tree -->
+        <ResizablePanel :default-size="70" class="overflow-y-auto">
+          <div class="px-1 pb-2">
+            <ContextMenu v-for="request in store.activeWorkspace.requests" :key="request.id">
+              <ContextMenuTrigger as-child>
+                <button
+                  class="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm hover:bg-accent transition-colors"
+                  :class="{
+                    'bg-accent': store.activeTabId === request.id,
+                    'ring-1 ring-primary bg-primary/10': selectedIds.has(request.id),
+                  }"
+                  @click="handleRequestClick(request, $event)"
+                >
+                  <span
+                    class="font-mono text-xs font-bold w-16 shrink-0 text-left truncate"
+                    :class="methodColor(request.method)"
+                    >{{ request.method }}</span
+                  >
+                  <input
+                    v-if="editingRequestId === request.id"
+                    :id="`request-rename-${request.id}`"
+                    v-model="editingLabel"
+                    class="bg-transparent outline-none flex-1 min-w-0 text-sm"
+                    @blur="commitRename"
+                    @keydown.enter.prevent="commitRename"
+                    @keydown.esc.prevent="cancelRename"
+                    @click.stop
+                    @dblclick.stop
+                  />
+                  <span
+                    v-else
+                    class="truncate flex-1 text-left"
+                    @dblclick.stop="startEditing(request)"
+                    >{{ request.label }}</span
+                  >
+                  <!-- dot indicator: request is open as a tab -->
+                  <span
+                    v-if="store.activeWorkspace.openRequestIds.includes(request.id)"
+                    class="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
+                  />
+                </button>
+              </ContextMenuTrigger>
+              <ContextMenuContent
+                @close-auto-focus="
+                  (e: Event) => {
+                    if (editingRequestId !== null) e.preventDefault()
+                  }
+                "
               >
-              <input
-                v-if="editingRequestId === request.id"
-                :id="`request-rename-${request.id}`"
-                v-model="editingLabel"
-                class="bg-transparent outline-none flex-1 min-w-0 text-sm"
-                @blur="commitRename"
-                @keydown.enter.prevent="commitRename"
-                @keydown.esc.prevent="cancelRename"
-                @click.stop
-                @dblclick.stop
-              />
-              <span
-                v-else
-                class="truncate flex-1 text-left"
-                @dblclick.stop="startEditing(request)"
-                >{{ request.label }}</span
-              >
-              <!-- dot indicator: request is open as a tab -->
-              <span
-                v-if="store.activeWorkspace.openRequestIds.includes(request.id)"
-                class="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
-              />
-            </button>
-          </ContextMenuTrigger>
-          <ContextMenuContent
-            @close-auto-focus="
-              (e: Event) => {
-                if (editingRequestId !== null) e.preventDefault()
-              }
-            "
-          >
-            <ContextMenuItem
-              v-if="!selectedIds.has(request.id) || selectedIds.size === 1"
-              @click="store.openRequest(request.id)"
-              >Open</ContextMenuItem
-            >
-            <ContextMenuItem
-              v-if="!selectedIds.has(request.id) || selectedIds.size === 1"
-              @click="startEditing(request)"
-              >Rename</ContextMenuItem
-            >
-            <ContextMenuSeparator v-if="!selectedIds.has(request.id) || selectedIds.size === 1" />
-            <ContextMenuItem
-              class="text-destructive focus:text-destructive"
-              @click="promptDelete(request)"
-            >
-              {{
-                selectedIds.has(request.id) && selectedIds.size > 1
-                  ? `Delete ${selectedIds.size} requests`
-                  : 'Delete'
-              }}
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
-      </div>
+                <ContextMenuItem
+                  v-if="!selectedIds.has(request.id) || selectedIds.size === 1"
+                  @click="store.openRequest(request.id)"
+                  >Open</ContextMenuItem
+                >
+                <ContextMenuItem
+                  v-if="!selectedIds.has(request.id) || selectedIds.size === 1"
+                  @click="startEditing(request)"
+                  >Rename</ContextMenuItem
+                >
+                <ContextMenuSeparator
+                  v-if="!selectedIds.has(request.id) || selectedIds.size === 1"
+                />
+                <ContextMenuItem
+                  class="text-destructive focus:text-destructive"
+                  @click="promptDelete(request)"
+                >
+                  {{
+                    selectedIds.has(request.id) && selectedIds.size > 1
+                      ? `Delete ${selectedIds.size} requests`
+                      : 'Delete'
+                  }}
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
+          </div>
+        </ResizablePanel>
 
-      <!-- Variables section -->
-      <div class="border-t shrink-0">
-        <button
-          class="flex items-center justify-between w-full px-3 py-2 hover:bg-accent transition-colors"
-          @click="variablesOpen = !variablesOpen"
-        >
-          <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-            >Variables</span
-          >
-          <ChevronDown
-            class="h-3 w-3 text-muted-foreground transition-transform"
-            :class="{ 'rotate-180': variablesOpen }"
-          />
-        </button>
-        <div v-show="variablesOpen" class="max-h-48 overflow-y-auto">
-          <ObjTable
-            data-testid="variables-table"
-            v-model:rows="store.activeWorkspace.variables"
-            :columns="variableColumns"
-          />
-        </div>
-      </div>
+        <ResizableHandle with-handle />
+
+        <!-- Variables panel -->
+        <ResizablePanel :default-size="30" :min-size="10" class="border-t flex flex-col min-h-0">
+          <div class="px-3 py-2 shrink-0">
+            <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >Variables</span
+            >
+          </div>
+          <div class="flex-1 overflow-y-auto">
+            <ObjTable
+              data-testid="variables-table"
+              v-model:rows="store.activeWorkspace.variables"
+              :columns="variableColumns"
+            />
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </template>
   </div>
 
