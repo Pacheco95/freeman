@@ -306,6 +306,12 @@ export const useRequestStore = defineStore(
         const store = ctx.store as unknown as { _initWatchers: () => void; workspaces: Workspace[] }
         for (const ws of store.workspaces) {
           ws.variables ??= []
+
+          ws.variables = ws.variables.map((v) =>
+            'data' in v
+              ? v
+              : { active: true, data: v as unknown as import('@/types/misc.ts').KeyValue },
+          )
         }
         store._initWatchers()
       },

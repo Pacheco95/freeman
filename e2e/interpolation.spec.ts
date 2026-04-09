@@ -22,9 +22,19 @@ async function openVariables(page: Page) {
 }
 
 async function addVariable(page: Page, key: string, value: string) {
-  await page.getByRole('button', { name: 'Add variable' }).click()
-  await page.getByPlaceholder('name').last().fill(key)
-  await page.getByPlaceholder('value').last().fill(value)
+  const rows = page.locator('[data-testid="variables-table"] tbody tr')
+  const countBefore = await rows.count()
+
+  // Type the key into the placeholder row (always last) — ObjTable commits it as a real row
+  await rows.last().locator('input').first().fill(key)
+
+  // Wait for the new real row to appear, then fill the value
+  await expect(rows).toHaveCount(countBefore + 1)
+  await rows
+    .nth(countBefore - 1)
+    .locator('input')
+    .nth(1)
+    .fill(value)
 }
 
 test.describe('variable interpolation', () => {

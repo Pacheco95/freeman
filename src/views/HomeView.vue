@@ -46,7 +46,9 @@ const handleNewRequest = async () => {
   const tabId = requestStore.activeTabId
   try {
     const vars = Object.fromEntries(
-      (requestStore.activeWorkspace?.variables ?? []).map((v) => [v.key, v.value]),
+      (requestStore.activeWorkspace?.variables ?? [])
+        .filter((v) => v.active && v.data.key)
+        .map((v) => [v.data.key, v.data.value]),
     )
     const terp = (s: string) => interpolate(s, vars)
 

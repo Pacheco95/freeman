@@ -65,10 +65,9 @@ test.describe('cURL import', () => {
     // Body tab — raw radio selected, editor contains JSON
     await tab.getByRole('tab', { name: 'Body' }).click()
     await expect(tab.getByRole('radio', { name: 'raw' })).toHaveAttribute('data-state', 'checked')
-    const editorText = await tab.locator('.view-lines').innerText()
-    expect(editorText).toContain('"title"')
-    expect(editorText).toContain('"foo"')
-    expect(editorText).toContain('"userId"')
+    await expect(tab.locator('.view-lines')).toContainText('"title"')
+    await expect(tab.locator('.view-lines')).toContainText('"foo"')
+    await expect(tab.locator('.view-lines')).toContainText('"userId"')
   })
 
   test('POST with query params and JSON body fills params table', async ({ page }) => {

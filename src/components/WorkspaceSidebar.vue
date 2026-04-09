@@ -4,6 +4,7 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-vue-next'
 import { useRequestStore } from '@/stores/request.store.ts'
 import { useUIStore } from '@/stores/ui.store.ts'
 import type { TabState } from '@/types/misc.ts'
+import ObjTable from '@/components/ObjTable.vue'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -140,13 +141,10 @@ function confirmDelete() {
 // ── Variables ────────────────────────────────────────────────────────────────
 const variablesOpen = ref(false)
 
-function addVariable() {
-  store.activeWorkspace?.variables.push({ key: '', value: '' })
-}
-
-function removeVariable(index: number) {
-  store.activeWorkspace?.variables.splice(index, 1)
-}
+const variableColumns = [
+  { title: 'Name', field: 'key' as const },
+  { title: 'Value', field: 'value' as const },
+]
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const METHOD_COLORS: Record<string, string> = {
@@ -306,36 +304,12 @@ function methodColor(method: string) {
             :class="{ 'rotate-180': variablesOpen }"
           />
         </button>
-        <div v-show="variablesOpen" class="px-2 pb-2 max-h-48 overflow-y-auto">
-          <div
-            v-for="(variable, index) in store.activeWorkspace.variables"
-            :key="index"
-            class="flex items-center gap-1 mb-1"
-          >
-            <input
-              v-model="variable.key"
-              placeholder="name"
-              class="flex-1 min-w-0 bg-transparent border rounded-sm px-1.5 py-0.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-            />
-            <input
-              v-model="variable.value"
-              placeholder="value"
-              class="flex-1 min-w-0 bg-transparent border rounded-sm px-1.5 py-0.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-            />
-            <button
-              class="shrink-0 opacity-50 hover:opacity-100 hover:text-destructive transition-colors"
-              @click="removeVariable(index)"
-            >
-              <Trash2 class="h-3 w-3" />
-            </button>
-          </div>
-          <button
-            class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
-            @click="addVariable"
-          >
-            <Plus class="h-3 w-3" />
-            Add variable
-          </button>
+        <div v-show="variablesOpen" class="max-h-48 overflow-y-auto">
+          <ObjTable
+            data-testid="variables-table"
+            v-model:rows="store.activeWorkspace.variables"
+            :columns="variableColumns"
+          />
         </div>
       </div>
     </template>

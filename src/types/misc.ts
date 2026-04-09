@@ -25,5 +25,5 @@ export type Workspace = {
   openRequestIds: number[]
   activeRequestId: number
   nextRequestId: number
-  variables: KeyValue[]
+  variables: ParamRow[]
 }

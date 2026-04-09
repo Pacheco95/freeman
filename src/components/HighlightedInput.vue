@@ -52,7 +52,12 @@ function onBlur() {
 }
 
 const definedVars = computed(
-  () => new Set((store.activeWorkspace?.variables ?? []).map((v) => v.key)),
+  () =>
+    new Set(
+      (store.activeWorkspace?.variables ?? [])
+        .filter((v) => v.active && v.data.key)
+        .map((v) => v.data.key),
+    ),
 )
 
 // The cursor is a zero-layout-impact inline element whose ::after draws the blinking line.
