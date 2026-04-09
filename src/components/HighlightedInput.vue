@@ -67,7 +67,7 @@ const highlighted = computed(() => {
   const re = /\{\{([^}]*)\}\}/g
   let m
   while ((m = re.exec(text)) !== null) {
-    const resolved = definedVars.value.has(m[1].trim())
+    const resolved = definedVars.value.has(m[1]?.trim() ?? '')
     spans.push({
       start: m.index,
       end: m.index + m[0].length,
